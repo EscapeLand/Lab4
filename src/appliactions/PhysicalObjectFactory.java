@@ -5,11 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PhysicalObjectFactory {
-	static String[] hint_Electron = new String[]{"Radius"};
-	static String[] hint_Planet = new String[]{"Name", "Form", "Color", "Planet radius",
-			"Revolution radius", "Revolution speed", "Direction", "Position"};
-	static String[] hint_User = new String[]{"Radius", "Name", "Age", "Gender"};
-	
 	@Nullable
 	public static PhysicalObject produce(@NotNull String[] args){
 		assert args.length > 0;

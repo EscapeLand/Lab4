@@ -22,6 +22,10 @@ import java.util.regex.Pattern;
 public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron> {
 	private Caretaker caretaker = new Caretaker();
 	
+	public AtomStructure() {
+		super(Kernel.class, Electron.class);
+	}
+	
 	@Override
 	public boolean loadFromFile(String path) throws IOException {
 		Pattern[] patterns = {Pattern.compile("ElementName\\s?::= ([A-Z][a-z]{0,2})"),
@@ -65,11 +69,6 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 		}
 		reader.close();
 		return true;
-	}
-	
-	@Override
-	protected String[] hintForUser() {
-		return PhysicalObjectFactory.hint_Electron;
 	}
 	
 	@Override
@@ -229,6 +228,7 @@ final class Caretaker{
 
 final class Electron extends PhysicalObject{
 	private ElectronState state = new Ground();
+	public static String[] hint = new String[]{"Radius"};
 	
 	Electron(double r) {
 		super("e", new double[]{r}, 360 * Math.random());
@@ -270,6 +270,11 @@ final class Kernel extends PhysicalObject{
 	@Override
 	public PhysicalObject clone() {
 		return new Kernel(getName());
+	}
+	
+	//@Override
+	public static String[] hintForUser() {
+		return new String[]{"Name"};
 	}
 	
 	public int getProtron() {

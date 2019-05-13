@@ -35,12 +35,13 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	protected Set<E> objects = new TreeSet<>(getDefaultComparator());
 	private Set<Track> tracks = new HashSet<>();
+	private Class<E> ECLASS;
+	private Class<L> LCLASS;
 	
-	/**
-	 * @return hint for user.
-	 * @apiNote this function will be astonished.
-	 */
-	protected abstract String[] hintForUser();
+	protected ConcreteCircularOrbit(Class<L> LCLASS, Class<E> ECLASS) {
+		this.LCLASS = LCLASS;
+		this.ECLASS = ECLASS;
+	}
 	
 	/**
 	 * check RI.
@@ -174,7 +175,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		objExec.addActionListener(e -> {
 			switch(objops.getSelectedIndex()){
 				case 0:
-					var form = promptForm(frame, "Add object", hintForUser());
+					var form = promptForm(frame, "Add object", E.hintForUser(ECLASS));
 					switch (form.length){
 						case 1: form = insert_copy(form, "Electron", 0); break;
 						case 4: form = insert_copy(form, "User", 0); break;

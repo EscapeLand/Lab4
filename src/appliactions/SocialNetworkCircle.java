@@ -20,6 +20,10 @@ import static APIs.CircularOrbitAPIs.getLogicalDistance;
 import static APIs.CircularOrbitAPIs.transform;
 
 public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser, User> {
+	public SocialNetworkCircle() {
+		super(CentralUser.class, User.class);
+	}
+	
 	@Override
 	public boolean loadFromFile(String path) throws IOException {
 		File file = new File(path);
@@ -231,11 +235,6 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 	}
 	
 	@Override
-	protected String[] hintForUser() {
-		return PhysicalObjectFactory.hint_User;
-	}
-	
-	@Override
 	public void checkRep() {
 		forEach(u->{assert u.getR().getRect()[0] == getLogicalDistance(this, center(), u);});
 	}
@@ -248,6 +247,7 @@ enum Gender{
 final class User extends PhysicalObject {
 	private final Gender gender;
 	private final int age;
+	public static String[] hint = new String[]{"Radius", "Name", "Age", "Gender"};
 	
 	User(Double r, String name, int age, Gender gender) {
 		super(name, new double[]{r}, 360 * Math.random());
@@ -303,7 +303,7 @@ final class User extends PhysicalObject {
 final class CentralUser extends PhysicalObject{
 	private final Gender gender;
 	private final int age;
-	
+	public static String[] hint = new String[]{"Name", "Age", "Gender"};
 	CentralUser(String name, int age, Gender gender) {
 		super(name, new double[]{0}, 0);
 		this.gender = gender;

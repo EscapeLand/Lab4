@@ -25,6 +25,10 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 	private double timeSpan = 2000;
 	private Runnable refresh;
 	
+	public StellarSystem() {
+		super(FixedStar.class, Planet.class);
+	}
+	
 	/**
 	 * register a refresh function.
 	 * it will be called whenever the stellar system is changed.
@@ -194,11 +198,6 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 	}
 	
 	@Override
-	protected String[] hintForUser() {
-		return PhysicalObjectFactory.hint_Planet;
-	}
-	
-	@Override
 	public void checkRep(){
 		var tracks = getTracks();
 		tracks.forEach(doubles -> {assert getObjectsOnTrack(doubles).size() <= 1; });
@@ -216,6 +215,7 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 final class FixedStar extends PhysicalObject{
 	public final double r;
 	public final double m;
+	public static String[] hint = new String[]{"Name", "Stellar radius", "Mass"};
 	
 	@Override
 	public boolean equals(Object o) {
@@ -247,8 +247,13 @@ final class FixedStar extends PhysicalObject{
 class Planet extends PhysicalObject {
 	private final String color;
 	private final Form form;
-	public final double r;              //radius of the planet
+	/**
+	 * radius of the planet
+	 */
+	public final double r;
 	public final double v;
+	public static String[] hint = new String[]{"Name", "Form", "Color", "Planet radius",
+			"Revolution radius", "Revolution speed", "Direction", "Position"};
 	
 	enum Form{
 		Solid, Liquid, Gas

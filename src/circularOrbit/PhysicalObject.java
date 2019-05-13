@@ -116,5 +116,23 @@ public abstract class PhysicalObject {
 			else return r;
 		};
 	}
+	
+	/**
+	 * get hint strings in sub class with reflection.
+	 * @param Ty Class Object of T.
+	 * @param <T> a PhysicalObject
+	 * @return hint strings with array.
+	 */
+	public static <T extends PhysicalObject> String[] hintForUser(Class<T> Ty){
+		try {
+			var f = Ty.getDeclaredField("hint");
+			f.setAccessible(true);
+			return (String[]) f.get(null);
+		} catch (NoSuchFieldException e) {
+			throw new RuntimeException(Ty.getSimpleName() + ".hint do not exist. ");
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(Ty.getSimpleName() + ".hint is not public. ");
+		}
+	}
 }
 
