@@ -1,12 +1,14 @@
-package appliactions;
+package applications;
 
 import APIs.CircularOrbitAPIs;
+import APIs.ExceptionGroup;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.management.InstanceAlreadyExistsException;
 import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;
@@ -19,14 +21,16 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet> {
+import static APIs.CircularOrbitHelper.generatePanel;
+
+public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, PlanetarySystem> {
 	private Thread loop;
 	private double time = 0;
-	private double timeSpan = 2000;
+	private double timeSpan = 160000;
 	private Runnable refresh;
 	
 	public StellarSystem() {
-		super(FixedStar.class, Planet.class);
+		super(FixedStar.class, PlanetarySystem.class);
 	}
 	
 	/**
@@ -49,45 +53,45 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 	@Override
 	public boolean loadFromFile(String path) throws IOException {
 		File file = new File(path);
+		ExceptionGroup exs = new ExceptionGroup();
 		BufferedReader reader = new BufferedReader(new FileReader(file));
-		for(String buffer = reader.readLine(); buffer != null; buffer = reader.readLine()) {
-			if(buffer.isEmpty()) continue;
+		
+		for (String buffer = reader.readLine(); buffer != null; buffer = reader.readLine()) {
+			if (buffer.isEmpty()) continue;
 			Matcher m = Pattern.compile("([a-zA-Z]+)\\s?::=\\s?<(.*)>").matcher(buffer);
-			if(!m.find() || m.groupCount() != 2){
-				System.out.println("warning: regex: group count != 2, continued. ");
-				continue;
+			if (!m.find() || m.groupCount() != 2) {
+				exs.join(new IllegalArgumentException("warning: regex: group count != 2, continued. "));
 			}
-			switch (m.group(1)){
-				case "Stellar":
-				{
+			switch (m.group(1)) {
+				case "Stellar": {
 					String[] list = m.group(2).split(",");
-					if(list.length != 3){
-						System.out.println("warning: regex: Stellar: not 3 args. continued. ");
-						continue;
+					if (list.length != 3) {
+						exs.join(new IllegalArgumentException("warning: regex: Stellar: not 3 args. continued. "));
 					}
 					FixedStar f = new FixedStar(list[0], Float.valueOf(list[1]), Double.valueOf(list[2]));
 					changeCentre(f);
 					break;
 				}
-				case "Planet":
-				{
+				case "Planet": {
 					List<String> list = new ArrayList<>(Arrays.asList(m.group(2).split(",")));
-					if(list.size() != 8){
-						System.out.println("warning: regex: Planet: not 8 args. continued. ");
-						continue;
+					if (list.size() != 8) {
+						exs.join(new IllegalArgumentException("warning: regex: Planet: not 8 args. continued. "));
 					}
 					list.add(0, "Planet");
 					PhysicalObject p = PhysicalObjectFactory.produce(list.toArray(new String[0]));
 					assert p instanceof Planet;
-					if(!addObject((Planet) p))
-						System.out.println("warning: failed to add " + list.get(1));
+					if (!addObject(new PlanetarySystem((Planet) p)))
+						exs.join(new RuntimeException("warning: failed to add " + list.get(1)));
 					break;
 				}
 				default:
-					System.out.println("warning: regex: unexpected key: " + m.group(1));
+					exs.join(new IllegalArgumentException("warning: regex: unexpected key: " + m.group(1)));
 			}
 		}
-		return true;
+		
+		reader.close();
+		if(!exs.isEmpty()) throw exs;
+		else return true;
 	}
 	
 	@Override
@@ -98,6 +102,7 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 		frame.setLayout(null);
 		this.test(frame, refresh);
 		
+		frame.setBounds(1000,232,364,512);
 		frame.setVisible(true);
 	}
 	
@@ -105,23 +110,23 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 	protected JPanel test(JFrame frame, Consumer<CircularOrbit> end) {
 		var par =  super.test(frame, end);
 		JPanel spec = new JPanel();
-		spec.setBounds(8, par.getY() + par.getHeight() + 8, 336, 136);
+		spec.setBounds(8, par.getY() + par.getHeight() + 8, 336, 224);
 		spec.setLayout(new FlowLayout(FlowLayout.CENTER, 336, 8));
 		spec.setBorder(BorderFactory.createLineBorder(Color.decode("#e91e63"), 1, true));
 		frame.add(spec);
 		
-		JPanel pnlTimeAt = new JPanel();
+		JPanel pnlTimeAt = generatePanel("State at Time");
 		JLabel lblTimeAt = new JLabel("Time at: ");
-		JTextField txtTimeAt = new JTextField("18000");
+		JTextField txtTimeAt = new JTextField("1800000");
 		JButton btnTimeApply = new JButton("Apply");
 		btnTimeApply.addActionListener(e-> {
-			setTime(Double.valueOf(txtTimeAt.getText()));
+			setTime(Double.valueOf(txtTimeAt.getText().trim()));
 			end.accept(this);
 		});
 		pnlTimeAt.add(lblTimeAt); pnlTimeAt.add(txtTimeAt); pnlTimeAt.add(btnTimeApply);
 		spec.add(pnlTimeAt);
 		
-		JPanel pnlCalc = new JPanel();
+		JPanel pnlCalc = generatePanel("Physical Distance");
 		JLabel lblCalc = new JLabel("Distance between "), lblAnd = new JLabel(" and ")
 				, lblRes = new JLabel();
 		JTextField txtA = new JTextField("Neptune"), txtB = new JTextField("Mercury");
@@ -139,7 +144,7 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 		pnlCalc.add(lblCalc); pnlCalc.add(txtA); pnlCalc.add(lblAnd); pnlCalc.add(txtB); pnlCalc.add(btnCalc);
 		pnlCalc.add(lblRes); spec.add(pnlCalc);
 		
-		JPanel pnlCtrl = new JPanel();
+		JPanel pnlCtrl = generatePanel("Controls");
 		JButton btnReset = new JButton("Reset"),
 				btnPause = new JButton("Pause"),
 				btnTimeSpanApply = new JButton("Apply");
@@ -160,8 +165,6 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 		btnTimeSpanApply.addActionListener(e->this.setTimeSpan(Double.valueOf(txtTimeSpan.getText())));
 		pnlCtrl.add(btnReset); pnlCtrl.add(btnPause); pnlCtrl.add(txtTimeSpan); pnlCtrl.add(btnTimeSpanApply);
 		spec.add(pnlCtrl);
-		
-		frame.setBounds(1000,232,364,360);
 		
 		return spec;
 	}
@@ -212,6 +215,7 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 	}
 }
 
+@SuppressWarnings("unused")
 final class FixedStar extends PhysicalObject{
 	public final double r;
 	public final double m;
@@ -244,6 +248,7 @@ final class FixedStar extends PhysicalObject{
 	}
 }
 
+@SuppressWarnings("unused")
 class Planet extends PhysicalObject {
 	private final String color;
 	private final Form form;
@@ -326,8 +331,11 @@ class Planet extends PhysicalObject {
 	}
 }
 
+@SuppressWarnings("unused")
 final class PlanetarySystem extends Planet{
 	private Set<Planet> satellites = new TreeSet<>(PhysicalObject.getDefaultComparator());
+	public static String[] hint = new String[]{"Name", "Form", "Color", "Planet radius",
+			"Revolution radius", "Revolution speed", "Direction", "Position"};
 	
 	PlanetarySystem(@NotNull Planet center) {
 		super(center.getName(), center.getForm(), center.getColor(), center.r, center.getR().getRect(),

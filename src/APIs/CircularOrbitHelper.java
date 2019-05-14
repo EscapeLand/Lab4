@@ -1,6 +1,6 @@
 package APIs;
 
-import appliactions.StellarSystem;
+import applications.StellarSystem;
 import circularOrbit.CircularOrbit;
 import circularOrbit.CircularOrbitFactory;
 import circularOrbit.DefaultCircularOrbitFactory;
@@ -8,15 +8,17 @@ import circularOrbit.PhysicalObject;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.view.mxGraph;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import track.Track;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static APIs.CircularOrbitAPIs.alert;
 import static java.lang.Thread.interrupted;
 
 
@@ -42,6 +44,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		refresh(c, false);
 	}
 	
+	@SuppressWarnings("unchecked")
 	static<L extends PhysicalObject, E extends PhysicalObject> void visualize(CircularOrbit<L, E> c){
 		CircularOrbitHelper<L, E> frame = new CircularOrbitHelper<>(c, 800);
 		if(c instanceof StellarSystem) {
@@ -51,6 +54,92 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
 		c.process(c1 -> frame.refresh(c1, true));
+	}
+	
+	@Nullable
+	public static String prompt(@Nullable JFrame owner, String title, String msg, @Nullable String def){
+		class flag{boolean flag = false;}
+		final StringBuffer p = new StringBuffer();
+		flag f = new flag();
+		class promptDialog extends JDialog{
+			private promptDialog(){
+				super(owner, title);
+				setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+				setBounds(400,200,368,128);
+				Container panel = getContentPane();
+				panel.setLayout(null);
+				JLabel lbl; JTextField txt; JButton btn;
+				panel.add(lbl = new JLabel(msg));
+				panel.add(txt = new JTextField(def));
+				panel.add(btn = new JButton("OK"));
+				
+				lbl.setBounds(8, 8, 256, 24);
+				txt.setBounds(8, 40, 256, 24);
+				btn.setBounds(288, 40, 56, 24);
+				
+				if(def != null) txt.setCaretPosition(def.length());
+				
+				ActionListener act = e -> {
+					p.append(txt.getText());
+					f.flag = true;
+					this.dispose();
+				};
+				btn.addActionListener(act);
+				
+				txt.registerKeyboardAction(act,
+				KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false),
+				JComponent.WHEN_FOCUSED);
+				
+				setModal(true);
+			}
+		}
+		var dialog = new promptDialog();
+		dialog.setVisible(true);
+		return f.flag ? p.toString() : null;
+	}
+	
+	public static String[] promptForm(@Nullable JFrame owner, String title, @NotNull String[] form){
+		JTextField[] formArray = new JTextField[form.length];
+		String[] input = new String[form.length];
+		
+		class promptDialog extends JDialog{
+			private promptDialog(){
+				super(owner, title);
+				int y = 8;
+				Container panel = getContentPane();
+				panel.setLayout(null);
+				
+				for (int i = 0; i < form.length; i++) {
+					JLabel lbl;
+					panel.add(lbl = new JLabel(form[i]));
+					panel.add(formArray[i] = new JTextField());
+					lbl.setBounds(8, y, 256, 24);
+					y += 32;
+					formArray[i].setBounds(8, y, 256, 24);
+					y += 32;
+				}
+				
+				JButton btn= new JButton("OK");
+				panel.add(btn);
+				btn.setBounds(200, y, 56, 24);
+				setBounds(400,200,292,y + 68);
+				
+				btn.addActionListener(e -> {
+					for (int i = 0; i < formArray.length; i++) {
+						input[i] = formArray[i].getText();
+					}
+					this.dispose();
+				});
+				setModal(true);
+			}
+		}
+		promptDialog dialog = new promptDialog();
+		dialog.setVisible(true);
+		return input;
+	}
+	
+	public static void alert(@Nullable JFrame owner, String title, String msg){
+		JOptionPane.showMessageDialog(owner, msg, title, JOptionPane.ERROR_MESSAGE);
 	}
 	
 	void refresh(CircularOrbit<L, E> c, boolean refreshCircle){
@@ -161,49 +250,65 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		return graph.insertEdge(parent, null, label, a, b, style);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static void main(String[] args){
 		CircularOrbitFactory factory = new DefaultCircularOrbitFactory();
 		CircularOrbit s;
 		Properties prop = new Properties();
 		String last = null;
 		
-		try{
-			InputStream in = new BufferedInputStream(new FileInputStream("history.properties"));
-			prop.load(in);
-			last = prop.getProperty("lastLoad");
-			in.close();
-		} catch (IOException e) {
-			System.out.println("INFO: property not load. continued. ");
-		}
-		finally {
-			if(last == null) last = "input/";
-			last = CircularOrbitAPIs.prompt(null,
-					"Load From", "input the path of the config file. ", last);
-		}
-		
-		try {
-			s = factory.CreateAndLoad(last);
-		} catch (IOException e) {
-			alert(null, "Error", e.getMessage());
-			return;
-		}
-		
-		if(s == null) {
-			if(!last.equals(""))
+		while(true){
+			try{
+				InputStream in = new BufferedInputStream(new FileInputStream("history.properties"));
+				prop.load(in);
+				last = prop.getProperty("lastLoad");
+				in.close();
+			} catch (IOException e) {
+				System.out.println("INFO: property not load. continued. ");
+			}
+			finally {
+				if(last == null) last = "input/";
+				last = prompt(null,
+						"Load From", "input the path of the config file. ", last);
+			}
+			
+			if(last == null) return;
+			
+			try {
+				s = factory.CreateAndLoad(last);
+			} catch (IOException e) {
+				alert(null, "Error", e.getMessage());
+				continue;
+			} catch (ExceptionGroup exs){
+				alert(null, "Errors in profile", exs.getMessage());
+				continue;
+			}
+			
+			if(s == null) {
 				alert(null, "Error", "failed to create circular orbit. ");
+				continue;
+			}
+			
+			try {
+				FileOutputStream oFile = new FileOutputStream("history.properties");
+				prop.setProperty("lastLoad", last);
+				prop.store(oFile, "History");
+				oFile.close();
+			} catch (IOException e) {
+				alert(null, "Error", e.getMessage());
+				continue;
+			}
+			
+			visualize(s);
 			return;
 		}
 		
-		try {
-			FileOutputStream oFile = new FileOutputStream("history.properties");
-			prop.setProperty("lastLoad", last);
-			prop.store(oFile, "History");
-			oFile.close();
-		} catch (IOException e) {
-			alert(null, "Error", e.getMessage());
-			return;
-		}
-		
-		visualize(s);
+	}
+	
+	public static JPanel generatePanel(String title){
+		JPanel n = new JPanel();
+		n.setBorder(BorderFactory.createTitledBorder(title));
+		n.setLayout(new FlowLayout(FlowLayout.CENTER, 8, 8));
+		return n;
 	}
 }

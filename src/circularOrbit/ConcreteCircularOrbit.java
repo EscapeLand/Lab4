@@ -1,18 +1,22 @@
 package circularOrbit;
 
+import APIs.CircularOrbitHelper;
 import graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import track.Track;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.*;
 import java.util.function.Consumer;
 
 import static APIs.CircularOrbitAPIs.*;
-import static appliactions.PhysicalObjectFactory.insert_copy;
-import static appliactions.PhysicalObjectFactory.produce;
+import static APIs.CircularOrbitHelper.alert;
+import static APIs.CircularOrbitHelper.generatePanel;
+import static applications.PhysicalObjectFactory.insert_copy;
+import static applications.PhysicalObjectFactory.produce;
 import static circularOrbit.PhysicalObject.getDefaultComparator;
 
 /**
@@ -36,17 +40,13 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	protected Set<E> objects = new TreeSet<>(getDefaultComparator());
 	private Set<Track> tracks = new HashSet<>();
 	private Class<E> ECLASS;
+	@SuppressWarnings({"unused"})
 	private Class<L> LCLASS;
 	
 	protected ConcreteCircularOrbit(Class<L> LCLASS, Class<E> ECLASS) {
 		this.LCLASS = LCLASS;
 		this.ECLASS = ECLASS;
 	}
-	
-	/**
-	 * check RI.
-	 */
-	public abstract void checkRep();
 	
 	@Override
 	public boolean addTrack(double[] r) {
@@ -121,11 +121,6 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		return ret;
 	}
 	
-	@Override
-	public boolean transit(double[] from, double[] to, int number) {
-		throw new RuntimeException("only AtomStructure can transit. ");
-	}
-	
 	/**
 	 * add User Interface controls on the frame.
 	 * @param frame where to add controls.
@@ -133,37 +128,38 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	 * @return a panel that includes the control added.
 	 */
 	protected JPanel test(JFrame frame, Consumer<CircularOrbit> end){
+		
 		JPanel common = new JPanel();
-		common.setBounds(8, 8, 336, 160);
 		common.setLayout(new FlowLayout(FlowLayout.CENTER, 336, 8));
 		common.setBorder(BorderFactory.createLineBorder(Color.decode("#673ab7"), 1, true));
 		frame.add(common);
 		
-		JPanel trackOP = new JPanel();
-		JPanel objOP = new JPanel();
-		JPanel entropy = new JPanel();
+		JPanel trackOP = generatePanel("Track Operation");
+		JPanel objOP = generatePanel("Object Operation");
+		JPanel entropy = generatePanel("Entropy");
 		var ops = new String[]{"Add", "Remove"};
 		
 		JComboBox<String> cmbOps = new JComboBox<>(ops);
-		JTextField tracknum = new JTextField("-1");
+		JTextField trackNum = new JTextField("-1");
 		JButton trackExec = new JButton("Execute");
 		
 		trackExec.addActionListener(e -> {
 			switch (cmbOps.getSelectedIndex()){
 				case 0:
-					addTrack(new double[]{Double.valueOf(tracknum.getText().trim())});
+					addTrack(new double[]{Double.valueOf(trackNum.getText().trim())});
 					checkRep();
 					break;
 				case 1:
-					Double d = Double.valueOf(tracknum.getText().trim());
+					Double d = Double.valueOf(trackNum.getText().trim());
 					removeTrack(new double[]{d});
 					break;
 			}
 			end.accept(this);
 		});
 		
-		trackOP.add(cmbOps); trackOP.add(tracknum); trackOP.add(trackExec);
+		trackOP.add(cmbOps); trackOP.add(trackNum); trackOP.add(trackExec);
 		common.add(trackOP);
+		
 		
 		JComboBox<String> objops = new JComboBox<>(ops);
 		Set<Track> tmp = new TreeSet<>(Track.defaultComparator);
@@ -175,7 +171,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		objExec.addActionListener(e -> {
 			switch(objops.getSelectedIndex()){
 				case 0:
-					var form = promptForm(frame, "Add object", E.hintForUser(ECLASS));
+					var form = CircularOrbitHelper.promptForm(frame, "Add object", E.hintForUser(ECLASS));
 					switch (form.length){
 						case 1: form = insert_copy(form, "Electron", 0); break;
 						case 4: form = insert_copy(form, "User", 0); break;
@@ -183,16 +179,20 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 						default: break;
 					}
 					var p = produce(form);
-					if(p != null) addObject((E) p);
-					checkRep();
+					if(p != null) addObject(ECLASS.cast(p));
+					checkRep();                 //post condition
 					break;
 				case 1:
 					Track r = (Track) objTidx.getSelectedItem();
 					if(r != null) {
-						String name = prompt(frame, "name of the object",
+						String name = CircularOrbitHelper.prompt(frame, "name of the object",
 								"Which object to remove? ", null);
-						if(name.equals("")) return;
+						if(name == null) return;
 						E o = find_if(objects, i->i.getR().equals(r) && i.getName().equals(name));
+						if(o == null) {
+							alert(frame, "Delete object", name + "do not exist. ");
+							return;
+						}
 						removeObject(o);
 					}
 					break;
@@ -204,12 +204,14 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		objOP.add(objops); objOP.add(objTidx); objOP.add(objExec);
 		common.add(objOP);
 		
+		
 		JButton btnent = new JButton("Calculate Entropy");
 		JLabel lblrst = new JLabel("");
 		btnent.addActionListener(e-> lblrst.setText(String.valueOf(getObjectDistributionEntropy(this))));
 		entropy.add(btnent); entropy.add(lblrst);
 		common.add(entropy);
 		
+		common.setBounds(8, 8, 336, 224);
 		return common;
 	}
 	
@@ -234,7 +236,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		final Set<E> ret = new TreeSet<>(E.getDefaultComparator());
 		final var tmp = new Track(r);
 		forEach(e->{
-			if(e.getR().equals(tmp)) ret.add((E) e.clone());
+			if(e.getR().equals(tmp)) ret.add(ECLASS.cast(e));
 		});
 		return ret;
 	}
@@ -244,7 +246,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		final Set<E> ret = new TreeSet<>(E.getDefaultComparator());
 		final var tmp = new Track(r);
 		forEach(e->{
-			if(e.getR().equals(tmp)) ret.add((E) e.clone());
+			if(e.getR().equals(tmp)) ret.add(ECLASS.cast(e));
 		});
 		return ret;
 	}

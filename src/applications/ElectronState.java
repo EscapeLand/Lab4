@@ -1,4 +1,4 @@
-package appliactions;
+package applications;
 
 interface ElectronState {
 	boolean isGround();

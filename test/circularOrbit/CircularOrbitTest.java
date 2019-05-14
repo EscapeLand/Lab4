@@ -1,6 +1,6 @@
 package circularOrbit;
 
-import appliactions.PhysicalObjectFactory;
+import applications.PhysicalObjectFactory;
 import org.junit.Test;
 
 import java.io.IOException;

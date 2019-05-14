@@ -1,6 +1,7 @@
-package appliactions;
+package applications;
 
 import APIs.CircularOrbitAPIs;
+import APIs.ExceptionGroup;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
@@ -19,6 +20,8 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static APIs.CircularOrbitHelper.generatePanel;
+
 public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron> {
 	private Caretaker caretaker = new Caretaker();
 	
@@ -28,54 +31,67 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 	
 	@Override
 	public boolean loadFromFile(String path) throws IOException {
-		Pattern[] patterns = {Pattern.compile("ElementName\\s?::= ([A-Z][a-z]{0,2})"),
-				Pattern.compile("NumberOfTracks\\s?::= (\\d+)"),
-				Pattern.compile("NumberOfElectron\\s?::= ((?:\\d+[/;]?)+)")};
+		Pattern[] patterns = {
+				Pattern.compile("ElementName\\s?::= ([A-Z][a-z]{0,2})"),
+				Pattern.compile("NumberOfElectron\\s?::= ((?:\\d+[/;]?)+)"),
+				Pattern.compile("NumberOfTracks\\s?::= (\\d+)")
+		};
+		ExceptionGroup exs = new ExceptionGroup();
 		File file = new File(path);
-		BufferedReader reader = new BufferedReader(new FileReader(file));
+		String[] txt = new String[3];
 		
-		String buffer = reader.readLine();
-		Matcher m = patterns[0].matcher(buffer);
-		if(!m.find() || m.groupCount() != 1){
-			System.out.println("warning: regex: ElementName != 1. ");
-			reader.close(); return false;
+		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+			for (int i = 0; i < 3; i++) txt[i] = reader.readLine();
+		}
+		
+		Arrays.sort(txt);
+		Matcher m = patterns[0].matcher(txt[0]);
+		if (!m.find() || m.groupCount() != 1) {
+			exs.join(new IllegalArgumentException("warning: regex: ElementName != 1. "));
 		}
 		
 		changeCentre(new Kernel(m.group(1)));
 		
-		buffer = reader.readLine();
-		m = patterns[1].matcher(buffer);
-		if(!m.find() || m.groupCount() != 1){
-			System.out.println("warning: regex: NumberOfTracks != 1. ");
-			reader.close(); return false;
+		m = patterns[2].matcher(txt[2]);
+		if (!m.find() || m.groupCount() != 1) {
+			exs.join(new IllegalArgumentException("warning: regex: NumberOfTracks != 1. "));
 		}
-		
 		int n = Integer.valueOf(m.group(1));
-		buffer = reader.readLine();
-		m = patterns[2].matcher(buffer);
-		if(!m.find() || m.groupCount() != 1){
-			System.out.println("warning: regex: NumberOfElectron != 1. ");
-			reader.close(); return false;
+		
+		m = patterns[1].matcher(txt[1]);
+		if (!m.find() || m.groupCount() != 1) {
+			exs.join(new IllegalArgumentException("warning: regex: NumberOfElectron != 1. "));
 		}
 		
 		int[] num = new int[n];
-		int i = 0;
-		for (String[] tmp = m.group(1).split("[/;]"); i < n; i++) {
+		String[] tmp = m.group(1).split("[/;]");
+		if(tmp.length != 2 * n) {
+			exs.join(new IllegalArgumentException("warning: track number != sizeof(ObjectGroup)"));
+		}
+		
+		for (int i = 0; i < n; i++) {
 			num[i] = Integer.valueOf(tmp[2 * i + 1]);
 		}
 		
-		for(i = 0; i < n; i++){
-			for(int j = 0; j < num[i]; j++) addObject(new Electron(i + 1));
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < num[i]; j++) addObject(new Electron(i + 1));
 		}
-		reader.close();
-		return true;
+		
+		if(!exs.isEmpty()) throw exs;
+		else return true;
 	}
 	
 	@Override
 	public void checkRep() {}
 	
-	@Override
-	public boolean transit(double[] from, double[] to, int number) {
+	/**
+	 * @param from transit from.
+	 * @param to transit to.
+	 * @param number how many electrons to transit.
+	 * @apiNote only AtomStructure can transit.
+	 * @return true if success.
+	 */
+	private boolean transit(double[] from, double[] to, int number) {
 		if(from == to) return false;
 		if(!findTrack(from) || !findTrack(to)) return false;
 		//TODO boolean up = to[1] > from[0];
@@ -104,8 +120,9 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		frame.setLayout(null);
-		this.test(frame, refresh);
+		var spc = this.test(frame, refresh);
 		
+		frame.setBounds(1000,232,364,spc.getY() + spc.getHeight() + 48);
 		frame.setVisible(true);
 	}
 	
@@ -113,12 +130,12 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 	protected JPanel test(JFrame frame, Consumer<CircularOrbit> refresh) {
 		var par = super.test(frame, refresh);
 		JPanel spec = new JPanel();
-		spec.setBounds(8, par.getY() + par.getHeight() + 8, 336, 48);
+		spec.setBounds(8, par.getY() + par.getHeight() + 8, 336, 84);
 		spec.setLayout(new FlowLayout(FlowLayout.CENTER, 336, 8));
 		spec.setBorder(BorderFactory.createLineBorder(Color.decode("#e91e63"), 1, true));
 		frame.add(spec);
 		
-		JPanel panel = new JPanel();
+		JPanel panel = generatePanel("Transit");
 		spec.add(panel);
 		panel.setBounds(8, 176, 336, 32);
 		
@@ -131,7 +148,6 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 		JTextField txtNum = new JTextField("1  ");
 		
 		panel.add(cmbS1); panel.add(btnTrsit); panel.add(cmbS2); panel.add(txtNum);
-		frame.setBounds(1000,232,364,280);
 		
 		btnTrsit.addActionListener(e -> {
 			Track from = (Track) cmbS1.getSelectedItem();
@@ -228,6 +244,7 @@ final class Caretaker{
 
 final class Electron extends PhysicalObject{
 	private ElectronState state = new Ground();
+	@SuppressWarnings("unused")
 	public static String[] hint = new String[]{"Radius"};
 	
 	Electron(double r) {
@@ -259,9 +276,11 @@ final class Electron extends PhysicalObject{
 	}
 }
 
+@SuppressWarnings("unused")
 final class Kernel extends PhysicalObject{
-	private int protron;
+	private int proton;
 	private int neutron;
+	public String[] hint = new String[]{"Name"};
 	
 	Kernel(String name) {
 		super(name, new double[]{0}, 0);
@@ -272,17 +291,12 @@ final class Kernel extends PhysicalObject{
 		return new Kernel(getName());
 	}
 	
-	//@Override
-	public static String[] hintForUser() {
-		return new String[]{"Name"};
+	public int getProton() {
+		return proton;
 	}
 	
-	public int getProtron() {
-		return protron;
-	}
-	
-	public void setProtron(int protron) {
-		this.protron = protron;
+	public void setProton(int proton) {
+		this.proton = proton;
 	}
 	
 	public int getNeutron() {

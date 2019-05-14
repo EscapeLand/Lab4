@@ -15,6 +15,11 @@ import java.util.function.Consumer;
  */
 public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObject> extends Iterable<E>{
 	/**
+	 * check RI.
+	 */
+	void checkRep();
+	
+	/**
 	 * add R track.
 	 * @param r add R track with radius of r.
 	 * @return if R track with radius r has already exist, return false; else true.
@@ -100,14 +105,6 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	@Nullable
 	public L center();
 	
-	/**
-	 * @param from transit from.
-	 * @param to transit to.
-	 * @param number how many electrons to transit.
-	 * @apiNote only AtomStructure can transit.
-	 * @return true if success.
-	 */
-	public boolean transit(double[] from, double[] to, int number);
 	
 	@NotNull Iterator<E> iterator();
 	

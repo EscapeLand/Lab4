@@ -7,17 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import track.Track;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class CircularOrbitAPIs {
-	public static<L extends PhysicalObject, E extends PhysicalObject> double getObjectDistributionEntropy(CircularOrbit<L, E> c){
+	public static<L extends PhysicalObject, E extends PhysicalObject>
+	double getObjectDistributionEntropy(CircularOrbit<L, E> c){
 		Map<Double, Float> p = new HashMap<>();
 		int sum = 0;
 		for (E i : c) {
@@ -33,7 +30,8 @@ public class CircularOrbitAPIs {
 		return H;
 	}
 	
-	public static int getLogicalDistance (CircularOrbit c, PhysicalObject a, PhysicalObject b){
+	public static <L extends PhysicalObject, E extends PhysicalObject>
+	int getLogicalDistance (CircularOrbit<L, E> c, PhysicalObject a, PhysicalObject b){
 		Graph<PhysicalObject> graph = c.getGraph();
 		if(!graph.vertices().containsAll(Arrays.asList(a, b))) return -1;
 		if(a == b) return 0;
@@ -63,7 +61,9 @@ public class CircularOrbitAPIs {
 	}
 	
 	public static<L extends PhysicalObject, E extends PhysicalObject> double getPhysicalDistance (CircularOrbit<L, E> c, PhysicalObject e1, PhysicalObject e2){
-		return oppositeSide(Math.abs(e1.getPos() - e2.getPos()), e1.getR().getRect()[0], e2.getR().getRect()[0]);
+		double l1 = e1.getR().getRect()[0];
+		double l2 = e2.getR().getRect()[0];
+		return Math.sqrt(l1 * l1 + l2 * l2 - 2 * l1 * l2 * Math.cos(Math.toRadians(Math.abs(e1.getPos() - e2.getPos()))));
 	}
 	
 	public static<L extends PhysicalObject, E extends PhysicalObject> Difference getDifference (CircularOrbit<L, E> c1, CircularOrbit<L, E> c2){
@@ -116,10 +116,6 @@ public class CircularOrbitAPIs {
 				new ArrayList<>(OBJDif1.values()), new ArrayList<>(OBJDif2.values()));
 	}
 	
-	private static double oppositeSide(double includeAngle, double l1, double l2){
-		return Math.sqrt(l1 * l1 + l2 * l2 - 2 * l1 * l2 * Math.cos(Math.toRadians(includeAngle)));
-	}
-	
 	@Nullable
 	public static <E> E find_if(@NotNull Iterable<E> col, Predicate<E> pred){
 		for (E e : col) {
@@ -129,91 +125,9 @@ public class CircularOrbitAPIs {
 	}
 	
 	@NotNull
-	public static <O, R> void transform(@NotNull Collection<O> src, @NotNull Collection<R> des, Function<O, R> func){
+	public static <O, R> void transform(@NotNull Collection<O> src, @NotNull Collection<R> des, Function<O, R> func) {
 		des.clear();
-		src.forEach(s->des.add(func.apply(s)));
-	}
-	
-	@NotNull
-	public static String prompt(@Nullable JFrame owner, String title, String msg, @Nullable String def){
-		StringBuffer p = new StringBuffer();
-		class promptDialog extends JDialog{
-			private promptDialog(){
-				super(owner, title);
-				setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-				setBounds(400,200,368,128);
-				Container panel = getContentPane();
-				panel.setLayout(null);
-				JLabel lbl; JTextField txt; JButton btn;
-				panel.add(lbl = new JLabel(msg));
-				panel.add(txt = new JTextField(def));
-				panel.add(btn = new JButton("OK"));
-				
-				lbl.setBounds(8, 8, 256, 24);
-				txt.setBounds(8, 40, 256, 24);
-				btn.setBounds(288, 40, 56, 24);
-				
-				if(def != null) txt.setCaretPosition(def.length());
-				
-				ActionListener act = e -> {
-					p.append(txt.getText());
-					this.dispose();
-				};
-				btn.addActionListener(act);
-				
-				txt.registerKeyboardAction(act,
-				KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false),
-				JComponent.WHEN_FOCUSED);
-				
-				setModal(true);
-			}
-		}
-		var dialog = new promptDialog();
-		dialog.setVisible(true);
-		return p.toString();
-	}
-	
-	public static String[] promptForm(@Nullable JFrame owner, String title, @NotNull String[] form){
-		JTextField[] formArray = new JTextField[form.length];
-		String[] input = new String[form.length];
-		
-		class promptDialog extends JDialog{
-			private promptDialog(){
-				super(owner, title);
-				int y = 8;
-				Container panel = getContentPane();
-				panel.setLayout(null);
-				
-				for (int i = 0; i < form.length; i++) {
-					JLabel lbl;
-					panel.add(lbl = new JLabel(form[i]));
-					panel.add(formArray[i] = new JTextField());
-					lbl.setBounds(8, y, 256, 24);
-					y += 32;
-					formArray[i].setBounds(8, y, 256, 24);
-					y += 32;
-				}
-				
-				JButton btn= new JButton("OK");
-				panel.add(btn);
-				btn.setBounds(200, y, 56, 24);
-				setBounds(400,200,292,y + 68);
-				
-				btn.addActionListener(e -> {
-					for (int i = 0; i < formArray.length; i++) {
-						input[i] = formArray[i].getText();
-					}
-					this.dispose();
-				});
-				setModal(true);
-			}
-		}
-		promptDialog dialog = new promptDialog();
-		dialog.setVisible(true);
-		return input;
-	}
-	public static void alert(@Nullable JFrame owner, String title, String msg){
-		JOptionPane.showMessageDialog(owner, msg, title, JOptionPane.ERROR_MESSAGE);
+		src.forEach(s -> des.add(func.apply(s)));
 	}
 }
 

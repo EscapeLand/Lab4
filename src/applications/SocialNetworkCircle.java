@@ -1,4 +1,4 @@
-package appliactions;
+package applications;
 
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.rmi.UnexpectedException;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
@@ -18,6 +19,7 @@ import java.util.regex.Pattern;
 
 import static APIs.CircularOrbitAPIs.getLogicalDistance;
 import static APIs.CircularOrbitAPIs.transform;
+import static APIs.CircularOrbitHelper.generatePanel;
 
 public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser, User> {
 	public SocialNetworkCircle() {
@@ -27,52 +29,60 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 	@Override
 	public boolean loadFromFile(String path) throws IOException {
 		File file = new File(path);
-		BufferedReader reader = new BufferedReader(new FileReader(file));
-		List<User> params = new ArrayList<>();
-		Set<String[]> record = new HashSet<>();
-		String center = null;
-		for(String buffer = reader.readLine(); buffer != null; buffer = reader.readLine()) {
-			if(buffer.isEmpty()) continue;
-			Matcher m = Pattern.compile("([a-zA-Z]+)\\s?::=\\s?<(.*)>").matcher(buffer);
-			if(!m.find() || m.groupCount() != 2){
-				System.out.println("warning: regex: group count != 2, continued. ");
-				continue;
+		
+		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+			List<User> params = new ArrayList<>();
+			Set<String[]> record = new HashSet<>();
+			String center = null;
+			for (String buffer = reader.readLine(); buffer != null; buffer = reader.readLine()) {
+				if (buffer.isEmpty()) continue;
+				Matcher m = Pattern.compile("([a-zA-Z]+)\\s?::=\\s?<(.*)>").matcher(buffer);
+				if (!m.find() || m.groupCount() != 2) {
+					throw new IllegalArgumentException("warning: regex: group count != 2, continued. ");
+				}
+				List<String> list = new ArrayList<>(Arrays.asList(m.group(2).split("\\s*,\\s*")));
+				if (list.size() != 3) {
+					throw new IllegalArgumentException("warning: regex: not 3 args. continued. ");
+				}
+				switch (m.group(1)) {
+					case "CentralUser":
+						center = list.get(0);
+						list.add(0, "CentralUser");
+						changeCentre((CentralUser) PhysicalObjectFactory.produce(list.toArray(new String[0])));
+						break;
+					case "Friend":
+						params.add(new User(list.get(0), Integer.valueOf(list.get(1)),
+								Enum.valueOf(Gender.class, list.get(2))));
+						break;
+					case "SocialTie":
+						record.add(list.toArray(new String[0]));
+						break;
+					default:
+						throw new IllegalArgumentException("warning: regex: unexpected key: " + m.group(1));
+				}
 			}
-			List<String> list = new ArrayList<>(Arrays.asList(m.group(2).split("\\s*,\\s*")));
-			if(list.size() != 3){
-				System.out.println("warning: regex: not 3 args. continued. ");
-				continue;
+			
+			assert center != null;
+			
+			params.forEach(this::addObject);
+			
+			for (String[] list : record) {
+				PhysicalObject q1 = query(list[0]);
+				PhysicalObject q2 = query(list[1]);
+				if (q1 == null || q2 == null)
+					throw new UnexpectedException("warning: add relationship between two person not defined. ");
+				
+				if(q1.equals(q2))
+					throw new UnexpectedException("warning: relationship: " + q1.getName() + "->" + q2.getName());
+				setRelation(q1, q2, Float.valueOf(list[2]));
 			}
-			switch (m.group(1)){
-				case "CentralUser":
-					center = list.get(0);
-					list.add(0, "CentralUser");
-					changeCentre((CentralUser) PhysicalObjectFactory.produce(list.toArray(new String[0])));
-					break;
-				case "Friend":
-					params.add(new User(list.get(0), Integer.valueOf(list.get(1)),
-							Enum.valueOf(Gender.class, list.get(2))));
-					break;
-				case "SocialTie":
-					record.add(list.toArray(new String[0]));
-					break;
-				default:
-					System.out.println("warning: regex: unexpected key: " + m.group(1));
-			}
+			
+			updateR();
+			
+		} catch (IllegalArgumentException | UnexpectedException e) {
+			System.out.println(e.getMessage());
+			return false;
 		}
-		reader.close();
-		assert center != null;
-		
-		params.forEach(this::addObject);
-		
-		for (String[] list : record) {
-			PhysicalObject q1 = query(list[0]);
-			PhysicalObject q2 = query(list[1]);
-			assert q1 != null && q2 != null;
-			setRelation(q1, q2, Float.valueOf(list[2]));
-		}
-		
-		updateR();
 		
 		return true;
 	}
@@ -85,6 +95,7 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 		frame.setLayout(null);
 		this.test(frame, refresh);
 		
+		frame.setBounds(1000,232,396,512);
 		frame.setVisible(true);
 	}
 	
@@ -92,7 +103,8 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 	protected JPanel test(JFrame frame, Consumer<CircularOrbit> end) {
 		JPanel par = super.test(frame, end);
 		JPanel spec = new JPanel();
-		spec.setBounds(8, par.getY() + par.getHeight() + 8, 336, 136);
+		par.setBounds(8, 8, 364, par.getHeight());
+		spec.setBounds(8, par.getY() + par.getHeight() + 8, 364, 224);
 		spec.setLayout(new FlowLayout(FlowLayout.CENTER, 336, 8));
 		spec.setBorder(BorderFactory.createLineBorder(Color.decode("#e91e63"), 1, true));
 		frame.add(spec);
@@ -103,7 +115,7 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 		//============================================================
 		//============================================================
 		
-		JPanel pnlRlt = new JPanel();
+		JPanel pnlRlt = generatePanel("Relationship Operation");
 		JComboBox<String> cmbRltOP = new JComboBox<>(operation);
 		JTextField txtA = new JTextField("TommyWong"), txtB = new JTextField("TomWong"),
 				txtFrV = new JTextField("0.99");
@@ -129,7 +141,7 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 		//============================================================
 		//============================================================
 		
-		JPanel pnlExt = new JPanel();
+		JPanel pnlExt = generatePanel("Extend Degree");
 		var tmpuser = getObjectsOnTrack(new double[]{1});
 		Set<String> tmpstring;
 		if(tmpuser.isEmpty()) tmpstring = null;
@@ -152,28 +164,25 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 		//============================================================
 		//============================================================
 		
-		JPanel pnlLgc = new JPanel();
-		JLabel lblLgc = new JLabel("LGC DIST between: "), lblrst = new JLabel();
-		JButton btnLgc = new JButton("=");
+		JPanel pnlLgc = generatePanel("Logic Distance");
+		JLabel lblrst = new JLabel();
+		JButton btnLgc = new JButton("Calculate");
 		JTextField txtC = new JTextField("DavidChen"), txtD = new JTextField("TomWong");
 		
 		btnLgc.addActionListener(e->{
 			var a = query(txtC.getText());
 			var b = query(txtD.getText());
 			if(a instanceof User && b instanceof User){
-				lblrst.setText(String.valueOf(getLogicalDistance(this, (User)a, (User)b)));
-				lblLgc.setVisible(false);
+				lblrst.setText(String.valueOf(getLogicalDistance(this, a, b)));
 			}
 			else {
 				lblrst.setText("");
-				lblLgc.setVisible(true);
 			}
 		});
 		
-		pnlLgc.add(lblLgc); pnlLgc.add(txtC); pnlLgc.add(txtD); pnlLgc.add(btnLgc); pnlLgc.add(lblrst);
+		pnlLgc.add(txtC); pnlLgc.add(txtD); pnlLgc.add(btnLgc); pnlLgc.add(lblrst);
 		spec.add(pnlLgc);
 		
-		frame.setBounds(1000,232,364,360);
 		return spec;
 	}
 	
@@ -244,6 +253,7 @@ enum Gender{
 	M, F
 }
 
+@SuppressWarnings("unused")
 final class User extends PhysicalObject {
 	private final Gender gender;
 	private final int age;
@@ -300,10 +310,12 @@ final class User extends PhysicalObject {
 	}
 }
 
+@SuppressWarnings("unused")
 final class CentralUser extends PhysicalObject{
 	private final Gender gender;
 	private final int age;
 	public static String[] hint = new String[]{"Name", "Age", "Gender"};
+	
 	CentralUser(String name, int age, Gender gender) {
 		super(name, new double[]{0}, 0);
 		this.gender = gender;

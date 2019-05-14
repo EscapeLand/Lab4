@@ -1,7 +1,7 @@
 package APIs;
 
-import appliactions.PhysicalObjectFactory;
-import appliactions.StellarSystem;
+import applications.PhysicalObjectFactory;
+import applications.StellarSystem;
 import circularOrbit.CircularOrbit;
 import circularOrbit.CircularOrbitFactory;
 import circularOrbit.DefaultCircularOrbitFactory;

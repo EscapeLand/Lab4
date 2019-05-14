@@ -1,8 +1,8 @@
 package circularOrbit;
 
-import appliactions.AtomStructure;
-import appliactions.SocialNetworkCircle;
-import appliactions.StellarSystem;
+import applications.AtomStructure;
+import applications.SocialNetworkCircle;
+import applications.StellarSystem;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -13,8 +13,7 @@ public class DefaultCircularOrbitFactory implements CircularOrbitFactory {
 		CircularOrbit c = Create(loadFrom);
 		if(c == null) return null;
 		c.loadFromFile(loadFrom);
-		assert c instanceof ConcreteCircularOrbit;
-		((ConcreteCircularOrbit) c).checkRep();
+		c.checkRep();
 		return c;
 	}
 	

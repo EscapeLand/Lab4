@@ -1,4 +1,4 @@
-package appliactions;
+package applications;
 
 import circularOrbit.PhysicalObject;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +28,7 @@ public class PhysicalObjectFactory {
 				default: return null;
 			}
 		} catch (IllegalArgumentException e) {
+			System.out.println("warning: " + e.getMessage());
 			return null;
 		}
 	}
