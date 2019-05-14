@@ -1,15 +1,14 @@
 package circularOrbit;
 
+import APIs.ExceptionGroup;
 import applications.AtomStructure;
 import applications.SocialNetworkCircle;
 import applications.StellarSystem;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-
 public class DefaultCircularOrbitFactory implements CircularOrbitFactory {
 	@Override @Nullable
-	public CircularOrbit CreateAndLoad(String loadFrom) throws IOException {
+	public CircularOrbit CreateAndLoad(String loadFrom) throws ExceptionGroup {
 		CircularOrbit c = Create(loadFrom);
 		if(c == null) return null;
 		c.loadFromFile(loadFrom);

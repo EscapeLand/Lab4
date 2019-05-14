@@ -9,12 +9,8 @@ public class AtomStructureTest {
 	AtomStructure am = new AtomStructure();
 	
 	public AtomStructureTest(){
-		try {
-			a.loadFromFile("input/AtomicStructure.txt");
-			am.loadFromFile("input/AtomicStructure_Medium.txt");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		a.loadFromFile("input/AtomicStructure.txt");
+		am.loadFromFile("input/AtomicStructure_Medium.txt");
 	}
 	
 	@Test

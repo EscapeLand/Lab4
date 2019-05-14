@@ -3,7 +3,7 @@ package circularOrbit;
 import applications.PhysicalObjectFactory;
 import org.junit.Test;
 
-import java.io.IOException;
+import java.util.Objects;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -11,83 +11,71 @@ import static org.junit.Assert.*;
 public class CircularOrbitTest {
 	private CircularOrbitFactory cf = new DefaultCircularOrbitFactory();
 	
-	@Test
+	@Test @SuppressWarnings("unchecked")
 	public void testAddAndRemove(){
 		var eargs = new String[]{"Electron", "1"};
 		CircularOrbit c = cf.Create("AtomicStructure");
 		var e = PhysicalObjectFactory.produce(eargs);
+		assert c != null;
+		assert e != null;
 		c.addObject(e);
 		assertEquals(1, c.size());
 		eargs[1] = "2";
-		assertTrue(c.addObject(PhysicalObjectFactory.produce(eargs)));
+		assertTrue(c.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eargs))));
 		assertEquals(2, c.size());
 		assertTrue(c.removeObject(e));
 		assertEquals(1, c.size());
-		assertFalse(c.removeObject(PhysicalObjectFactory.produce(eargs)));
+		assertFalse(c.removeObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eargs))));
 	}
 	
-	@Test
+	@Test @SuppressWarnings("unchecked")
 	public void testGetTrackAndObjectOnTrack(){
-		try {
-			var b = cf.CreateAndLoad("input/AtomicStructure.txt");
-			Set<Double[]> bt = b.getTracks();
-			assertEquals(5, bt.size());
-			int[] test = new int[]{2, 8, 18, 8, 1};
-			for (int i = 0; i < test.length; i++) {
-				assertEquals(test[i], b.getObjectsOnTrack(new double[]{i + 1}).size());
-			}
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
+		var b = cf.CreateAndLoad("input/AtomicStructure.txt");
+		assert b != null;
+		Set<Double[]> bt = b.getTracks();
+		assertEquals(5, bt.size());
+		int[] test = new int[]{2, 8, 18, 8, 1};
+		for (int i = 0; i < test.length; i++) {
+			assertEquals(test[i], b.getObjectsOnTrack(new double[]{i + 1}).size());
 		}
 		
-		try {
-			var a = cf.CreateAndLoad("input/AtomicStructure_Medium.txt");
-			Set<Double[]> bt = a.getTracks();
-			assertEquals(6, bt.size());
-			int[] test = new int[]{2, 8, 18, 30, 8, 2};
-			for (int i = 0; i < test.length; i++) {
-				assertEquals(test[i], a.getObjectsOnTrack(new double[]{i + 1}).size());
-			}
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
+		var a = cf.CreateAndLoad("input/AtomicStructure_Medium.txt");
+		assert a != null;
+		bt = a.getTracks();
+		assertEquals(6, bt.size());
+		test = new int[]{2, 8, 18, 30, 8, 2};
+		for (int i = 0; i < test.length; i++) {
+			assertEquals(test[i], a.getObjectsOnTrack(new double[]{i + 1}).size());
 		}
+		
 	}
 	
 	@Test
 	public void testQuery(){
-		try {
-			var c = cf.CreateAndLoad("input/StellarSystem.txt");
-			assertNotNull(c.query("Earth"));
-			assertNotNull(c.query("Sun"));
-			assertNull(c.query(""));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		var c = cf.CreateAndLoad("input/StellarSystem.txt");
+		assert c != null;
+		assertNotNull(c.query("Earth"));
+		assertNotNull(c.query("Sun"));
+		assertNull(c.query(""));
 		
 	}
 	
 	@Test
 	public void testRemoveTrack(){
-		try {
-			var c = cf.CreateAndLoad("input/AtomicStructure.txt");
-			assertEquals(37, c.size());
-			assertTrue(c.removeTrack(new double[]{1}));
-			assertEquals(35, c.size());
-			assertFalse(c.removeTrack(new double[]{8}));
-			assertEquals(35, c.size());
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		var c = cf.CreateAndLoad("input/AtomicStructure.txt");
+		assert c != null;
+		assertEquals(37, c.size());
+		assertTrue(c.removeTrack(new double[]{1}));
+		assertEquals(35, c.size());
+		assertFalse(c.removeTrack(new double[]{8}));
+		assertEquals(35, c.size());
+		
 	}
 	
 	@Test
 	public void testAddTrack(){
 		var c = cf.Create("AtomicStructure");
+		assert c != null;
 		assertEquals(0, c.getTracks().size());
 		assertTrue(c.addTrack(new double[]{1}));
 		assertEquals(1, c.getTracks().size());

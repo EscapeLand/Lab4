@@ -11,10 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.management.InstanceAlreadyExistsException;
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
@@ -22,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static APIs.CircularOrbitHelper.generatePanel;
+import static applications.PhysicalObjectFactory.insert_copy;
 
 public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, PlanetarySystem> {
 	private Thread loop;
@@ -51,45 +49,59 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 	}
 	
 	@Override
-	public boolean loadFromFile(String path) throws IOException {
+	public boolean loadFromFile(String path) throws ExceptionGroup {
 		File file = new File(path);
 		ExceptionGroup exs = new ExceptionGroup();
-		BufferedReader reader = new BufferedReader(new FileReader(file));
+		try(BufferedReader reader = new BufferedReader(new FileReader(file))) {
 		
 		for (String buffer = reader.readLine(); buffer != null; buffer = reader.readLine()) {
 			if (buffer.isEmpty()) continue;
 			Matcher m = Pattern.compile("([a-zA-Z]+)\\s?::=\\s?<(.*)>").matcher(buffer);
 			if (!m.find() || m.groupCount() != 2) {
 				exs.join(new IllegalArgumentException("warning: regex: group count != 2, continued. "));
+				continue;
 			}
 			switch (m.group(1)) {
 				case "Stellar": {
 					String[] list = m.group(2).split(",");
 					if (list.length != 3) {
 						exs.join(new IllegalArgumentException("warning: regex: Stellar: not 3 args. continued. "));
+						continue;
 					}
 					FixedStar f = new FixedStar(list[0], Float.valueOf(list[1]), Double.valueOf(list[2]));
 					changeCentre(f);
 					break;
 				}
 				case "Planet": {
-					List<String> list = new ArrayList<>(Arrays.asList(m.group(2).split(",")));
-					if (list.size() != 8) {
+					String[] list = m.group(2).split(",");
+					
+					if (list.length != 8) {
 						exs.join(new IllegalArgumentException("warning: regex: Planet: not 8 args. continued. "));
 					}
-					list.add(0, "Planet");
-					PhysicalObject p = PhysicalObjectFactory.produce(list.toArray(new String[0]));
+					if(query(list[0]) != null) {
+						exs.join(new RuntimeException("warning: " + list[0] + " already exist. "));
+						continue;
+					}
+					list = insert_copy(list,  "Planet", 0);
+					PhysicalObject p = PhysicalObjectFactory.produce(list);
 					assert p instanceof Planet;
-					if (!addObject(new PlanetarySystem((Planet) p)))
-						exs.join(new RuntimeException("warning: failed to add " + list.get(1)));
+					if (!addObject(new PlanetarySystem((Planet) p))){
+						exs.join(new RuntimeException("warning: failed to add " + list[1]));
+						continue;
+					}
 					break;
 				}
 				default:
 					exs.join(new IllegalArgumentException("warning: regex: unexpected key: " + m.group(1)));
 			}
+			
+			}
+			
+		} catch (Exception e) {
+			exs.join(e);
+			throw exs;
 		}
 		
-		reader.close();
 		if(!exs.isEmpty()) throw exs;
 		else return true;
 	}
@@ -120,7 +132,12 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 		JTextField txtTimeAt = new JTextField("1800000");
 		JButton btnTimeApply = new JButton("Apply");
 		btnTimeApply.addActionListener(e-> {
-			setTime(Double.valueOf(txtTimeAt.getText().trim()));
+			try{
+				setTime(Double.valueOf(txtTimeAt.getText().trim()));
+			} catch (NumberFormatException ex) {
+				txtTimeAt.setText("1800000");
+				return;
+			}
 			end.accept(this);
 		});
 		pnlTimeAt.add(lblTimeAt); pnlTimeAt.add(txtTimeAt); pnlTimeAt.add(btnTimeApply);
@@ -133,8 +150,8 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 		JButton btnCalc = new JButton("=");
 		btnCalc.addActionListener(e->{
 			lblCalc.setVisible(false);
-			PhysicalObject o1 = query(txtA.getText());
-			PhysicalObject o2 = query(txtB.getText());
+			PhysicalObject o1 = query(txtA.getText().trim());
+			PhysicalObject o2 = query(txtB.getText().trim());
 			if (o1 instanceof Planet && o2 instanceof Planet) {
 				lblRes.setText(String.valueOf(CircularOrbitAPIs.getPhysicalDistance(this, o1, o2)));
 			} else {
@@ -149,7 +166,7 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 				btnPause = new JButton("Pause"),
 				btnTimeSpanApply = new JButton("Apply");
 		JTextField txtTimeSpan = new JTextField("1600000");
-		btnReset.addActionListener(e->{this.reset(); end.accept(this);});
+		btnReset.addActionListener(e->{this.reset(); end.accept(this); btnPause.setText("Resume");});
 		btnPause.addActionListener(e->{
 			switch (btnPause.getText()) {
 				case "Resume":
@@ -162,7 +179,13 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 					break;
 			}
 		});
-		btnTimeSpanApply.addActionListener(e->this.setTimeSpan(Double.valueOf(txtTimeSpan.getText())));
+		btnTimeSpanApply.addActionListener(e->{
+			try{
+				this.setTimeSpan(Double.valueOf(txtTimeSpan.getText().trim()));
+			} catch (NumberFormatException ex) {
+				txtTimeSpan.setText("1600000");
+			}
+		});
 		pnlCtrl.add(btnReset); pnlCtrl.add(btnPause); pnlCtrl.add(txtTimeSpan); pnlCtrl.add(btnTimeSpanApply);
 		spec.add(pnlCtrl);
 		

@@ -5,10 +5,11 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class ExceptionGroup extends RuntimeException{
-	private List<RuntimeException> exs = new ArrayList<>();
+	private List<Exception> exs = new ArrayList<>();
 	
-	public boolean join(RuntimeException ex){
+	public boolean join(Exception ex){
 		return exs.add(ex);
 	}
 	
@@ -28,7 +29,7 @@ public class ExceptionGroup extends RuntimeException{
 	
 	@Override
 	public void printStackTrace() {
-		exs.forEach(RuntimeException::printStackTrace);
+		exs.forEach(Exception::printStackTrace);
 	}
 	
 	@Override
@@ -45,7 +46,7 @@ public class ExceptionGroup extends RuntimeException{
 		return exs.size();
 	}
 	
-	public RuntimeException get(int index){
+	public Exception get(int index){
 		return exs.get(index);
 	}
 	

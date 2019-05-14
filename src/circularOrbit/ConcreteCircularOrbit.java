@@ -140,17 +140,22 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		var ops = new String[]{"Add", "Remove"};
 		
 		JComboBox<String> cmbOps = new JComboBox<>(ops);
-		JTextField trackNum = new JTextField("-1");
+		JTextField trackNum = new JTextField("  1");
 		JButton trackExec = new JButton("Execute");
 		
 		trackExec.addActionListener(e -> {
+			double d; try{
+				d = Double.valueOf(trackNum.getText().trim());
+			} catch (NumberFormatException ex) {
+				trackNum.setText("  1");
+				return;
+			}
 			switch (cmbOps.getSelectedIndex()){
 				case 0:
-					addTrack(new double[]{Double.valueOf(trackNum.getText().trim())});
+					addTrack(new double[]{d});
 					checkRep();
 					break;
 				case 1:
-					Double d = Double.valueOf(trackNum.getText().trim());
 					removeTrack(new double[]{d});
 					break;
 			}
@@ -161,7 +166,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		common.add(trackOP);
 		
 		
-		JComboBox<String> objops = new JComboBox<>(ops);
+		JComboBox<String> objOps = new JComboBox<>(ops);
 		Set<Track> tmp = new TreeSet<>(Track.defaultComparator);
 		transform(getTracks(), tmp, Track::new);
 		JComboBox<Track> objTidx = new JComboBox<>(tmp.toArray(new Track[0]));
@@ -169,8 +174,9 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		JButton objExec = new JButton("Execute");
 
 		objExec.addActionListener(e -> {
-			switch(objops.getSelectedIndex()){
+			switch(objOps.getSelectedIndex()){
 				case 0:
+				{
 					var form = CircularOrbitHelper.promptForm(frame, "Add object", E.hintForUser(ECLASS));
 					switch (form.length){
 						case 1: form = insert_copy(form, "Electron", 0); break;
@@ -182,26 +188,30 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 					if(p != null) addObject(ECLASS.cast(p));
 					checkRep();                 //post condition
 					break;
+				}
 				case 1:
-					Track r = (Track) objTidx.getSelectedItem();
-					if(r != null) {
-						String name = CircularOrbitHelper.prompt(frame, "name of the object",
-								"Which object to remove? ", null);
-						if(name == null) return;
-						E o = find_if(objects, i->i.getR().equals(r) && i.getName().equals(name));
-						if(o == null) {
-							alert(frame, "Delete object", name + "do not exist. ");
-							return;
-						}
-						removeObject(o);
+					var p = objTidx.getSelectedItem();
+					if(!(p instanceof Track)) {
+						objTidx.setSelectedIndex(0);
+						return;
 					}
+					Track r = (Track) p;
+					String name = CircularOrbitHelper.prompt(frame, "name of the object",
+							"Which object to remove? ", null);
+					if(name == null) return;
+					E o = find_if(objects, i->i.getR().equals(r) && i.getName().equals(name));
+					if(o == null) {
+						alert(frame, "Delete object", name + "do not exist. ");
+						return;
+					}
+					removeObject(o);
 					break;
 				default: return;
 			}
 			end.accept(this);
 		});
 		
-		objOP.add(objops); objOP.add(objTidx); objOP.add(objExec);
+		objOP.add(objOps); objOP.add(objTidx); objOP.add(objExec);
 		common.add(objOP);
 		
 		

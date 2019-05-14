@@ -7,11 +7,7 @@ import java.io.IOException;
 public class SocialNetworkCircleTest {
 	SocialNetworkCircle s = new SocialNetworkCircle();
 	public SocialNetworkCircleTest() {
-		try {
-			s.loadFromFile("input/SocialNetworkCircle.txt");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		s.loadFromFile("input/SocialNetworkCircle.txt");
 	}
 	
 	@Test

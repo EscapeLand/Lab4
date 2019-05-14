@@ -1,5 +1,6 @@
 package circularOrbit;
 
+import APIs.ExceptionGroup;
 import graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +76,7 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	 * @return true if the load is complete with no error; else false.
 	 * @throws IOException when cannot open the file inferred by path.
 	 */
-	public boolean loadFromFile(String path) throws IOException;
+	public boolean loadFromFile(String path) throws ExceptionGroup;
 	
 	/**
 	 * find R object with its name.

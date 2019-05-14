@@ -1,5 +1,6 @@
 package applications;
 
+import APIs.ExceptionGroup;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
@@ -27,22 +28,24 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 	}
 	
 	@Override
-	public boolean loadFromFile(String path) throws IOException {
+	public boolean loadFromFile(String path) throws ExceptionGroup {
 		File file = new File(path);
-		
+		ExceptionGroup exs = new ExceptionGroup();
+		List<User> params = new ArrayList<>();
+		Set<String[]> record = new HashSet<>();
+		String center = null;
 		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-			List<User> params = new ArrayList<>();
-			Set<String[]> record = new HashSet<>();
-			String center = null;
 			for (String buffer = reader.readLine(); buffer != null; buffer = reader.readLine()) {
 				if (buffer.isEmpty()) continue;
 				Matcher m = Pattern.compile("([a-zA-Z]+)\\s?::=\\s?<(.*)>").matcher(buffer);
 				if (!m.find() || m.groupCount() != 2) {
-					throw new IllegalArgumentException("warning: regex: group count != 2, continued. ");
+					exs.join(new IllegalArgumentException("warning: regex: group count != 2, continued. "));
+					continue;
 				}
 				List<String> list = new ArrayList<>(Arrays.asList(m.group(2).split("\\s*,\\s*")));
 				if (list.size() != 3) {
-					throw new IllegalArgumentException("warning: regex: not 3 args. continued. ");
+					exs.join(new IllegalArgumentException("warning: regex: not 3 args. continued. "));
+					continue;
 				}
 				switch (m.group(1)) {
 					case "CentralUser":
@@ -58,33 +61,39 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 						record.add(list.toArray(new String[0]));
 						break;
 					default:
-						throw new IllegalArgumentException("warning: regex: unexpected key: " + m.group(1));
+						exs.join(new IllegalArgumentException("warning: regex: unexpected key: " + m.group(1)));
 				}
 			}
-			
-			assert center != null;
-			
-			params.forEach(this::addObject);
-			
-			for (String[] list : record) {
-				PhysicalObject q1 = query(list[0]);
-				PhysicalObject q2 = query(list[1]);
-				if (q1 == null || q2 == null)
-					throw new UnexpectedException("warning: add relationship between two person not defined. ");
-				
-				if(q1.equals(q2))
-					throw new UnexpectedException("warning: relationship: " + q1.getName() + "->" + q2.getName());
-				setRelation(q1, q2, Float.valueOf(list[2]));
-			}
-			
-			updateR();
-			
-		} catch (IllegalArgumentException | UnexpectedException e) {
-			System.out.println(e.getMessage());
-			return false;
+		} catch (IOException e) {
+			exs.join(e);
 		}
 		
-		return true;
+		
+		if (center == null) throw new RuntimeException("warning: center is not set. ");
+		
+		params.forEach(this::addObject);
+		
+		for (String[] list : record) {
+			PhysicalObject q1 = query(list[0]);
+			PhysicalObject q2 = query(list[1]);
+			if (q1 == null || q2 == null) {
+				exs.join(new RuntimeException("warning: add relationship between two person not defined. "));
+				continue;
+			}
+			
+			if(q1.equals(q2)){
+				exs.join(new RuntimeException("warning: relationship: " + q1.getName() + "->" + q2.getName()));
+				continue;
+			}
+			setRelation(q1, q2, Float.valueOf(list[2]));
+		}
+		
+		
+		if(exs.isEmpty()) {
+			updateR();
+			return true;
+		}
+		else throw exs;
 	}
 	
 	@Override
@@ -121,13 +130,27 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 				txtFrV = new JTextField("0.99");
 		JButton btnRltApply = new JButton("Apply");
 		btnRltApply.addActionListener(e->{
-			if(Float.valueOf(txtFrV.getText()) > 1) return;
-			var a = query(txtA.getText());
-			var b = query(txtB.getText());
+			var a = query(txtA.getText().trim());
+			var b = query(txtB.getText().trim());
 			if(a == null || b == null) return;
 			
 			switch (cmbRltOP.getSelectedIndex()){
-				case 0: setRelation(a, b, Float.valueOf(txtFrV.getText())); break;
+				case 0:
+				{
+					float frV;
+					try{
+						frV = Float.valueOf(txtFrV.getText().trim());
+					} catch (NumberFormatException ex) {
+						txtFrV.setText("0.99");
+						return;
+					}
+					if(frV > 1){
+						txtFrV.setText("0.99");
+						return;
+					}
+					setRelation(a, b, frV);
+					break;
+				}
 				case 1: setRelation(a, b, 0); break;
 			}
 			updateR();
@@ -142,13 +165,14 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 		//============================================================
 		
 		JPanel pnlExt = generatePanel("Extend Degree");
-		var tmpuser = getObjectsOnTrack(new double[]{1});
-		Set<String> tmpstring;
-		if(tmpuser.isEmpty()) tmpstring = null;
-		else tmpstring = new HashSet<>(tmpuser.size());
-		if(tmpstring != null) transform(tmpuser, tmpstring, PhysicalObject::getName);
-		JComboBox<String> cmbElm = new JComboBox<>(tmpstring == null ? new String[]{} : tmpstring.toArray(new String[0]));
-		if(tmpstring != null) tmpstring.clear();
+		var tmpUser = getObjectsOnTrack(new double[]{1});
+		Set<String> tmpString;
+		if(tmpUser.isEmpty()) tmpString = null;
+		else tmpString = new HashSet<>(tmpUser.size());
+		if(tmpString != null) transform(tmpUser, tmpString, PhysicalObject::getName);
+		JComboBox<String> cmbElm = new JComboBox<>(tmpString == null ? new String[]{}
+																	: tmpString.toArray(new String[0]));
+		if(tmpString != null) tmpString.clear();
 		JButton btnExt = new JButton("Calculate");
 		JLabel lblExtRst = new JLabel();
 		btnExt.addActionListener(e->{
@@ -170,14 +194,12 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 		JTextField txtC = new JTextField("DavidChen"), txtD = new JTextField("TomWong");
 		
 		btnLgc.addActionListener(e->{
-			var a = query(txtC.getText());
-			var b = query(txtD.getText());
+			var a = query(txtC.getText().trim());
+			var b = query(txtD.getText().trim());
 			if(a instanceof User && b instanceof User){
 				lblrst.setText(String.valueOf(getLogicalDistance(this, a, b)));
 			}
-			else {
-				lblrst.setText("");
-			}
+			else lblrst.setText("");
 		});
 		
 		pnlLgc.add(txtC); pnlLgc.add(txtD); pnlLgc.add(btnLgc); pnlLgc.add(lblrst);

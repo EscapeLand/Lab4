@@ -11,10 +11,7 @@ import track.Track;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -30,7 +27,7 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 	}
 	
 	@Override
-	public boolean loadFromFile(String path) throws IOException {
+	public boolean loadFromFile(String path) throws ExceptionGroup {
 		Pattern[] patterns = {
 				Pattern.compile("ElementName\\s?::= ([A-Z][a-z]{0,2})"),
 				Pattern.compile("NumberOfElectron\\s?::= ((?:\\d+[/;]?)+)"),
@@ -42,6 +39,9 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 		
 		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
 			for (int i = 0; i < 3; i++) txt[i] = reader.readLine();
+		} catch (Exception e) {
+			exs.join(e);
+			throw exs;
 		}
 		
 		Arrays.sort(txt);
@@ -145,7 +145,7 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 		JComboBox<Track> cmbS2 = new JComboBox<>(tmp.toArray(new Track[0]));
 		cmbS2.setSelectedIndex(1);
 		JButton btnTrsit = new JButton("Transit");
-		JTextField txtNum = new JTextField("1  ");
+		JTextField txtNum = new JTextField("  1");
 		
 		panel.add(cmbS1); panel.add(btnTrsit); panel.add(cmbS2); panel.add(txtNum);
 		
@@ -153,8 +153,13 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 			Track from = (Track) cmbS1.getSelectedItem();
 			Track to = (Track) cmbS2.getSelectedItem();
 			assert from != null && to != null;
-			if(transit(from.getRect(), to.getRect(), Integer.valueOf(txtNum.getText().trim())))
-				refresh.accept(this);
+			try{
+				if(transit(from.getRect(), to.getRect(), Integer.valueOf(txtNum.getText().trim())))
+					refresh.accept(this);
+			} catch (NumberFormatException ex) {
+				txtNum.setText("  1");
+			}
+			
 		});
 		
 		return spec;

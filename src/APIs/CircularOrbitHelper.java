@@ -276,11 +276,11 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 			
 			try {
 				s = factory.CreateAndLoad(last);
-			} catch (IOException e) {
-				alert(null, "Error", e.getMessage());
-				continue;
 			} catch (ExceptionGroup exs){
 				alert(null, "Errors in profile", exs.getMessage());
+				continue;
+			} catch (RuntimeException e) {
+				alert(null, "Error", e.getMessage());
 				continue;
 			}
 			

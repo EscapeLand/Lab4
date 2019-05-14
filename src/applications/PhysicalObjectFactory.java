@@ -27,7 +27,7 @@ public class PhysicalObjectFactory {
 					return new CentralUser(args[1], Integer.valueOf(args[2]), Enum.valueOf(Gender.class, args[3]));
 				default: return null;
 			}
-		} catch (IllegalArgumentException e) {
+		} catch (RuntimeException e) {
 			System.out.println("warning: " + e.getMessage());
 			return null;
 		}

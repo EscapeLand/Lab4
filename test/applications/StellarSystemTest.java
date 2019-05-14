@@ -11,11 +11,7 @@ public class StellarSystemTest {
 	@Test
 	public void loadFromFile() {
 		StellarSystem s = new StellarSystem();
-		try {
-			assertTrue(s.loadFromFile("input/StellarSystem.txt"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		assertTrue(s.loadFromFile("input/StellarSystem.txt"));
 		for(Planet i: s){
 			System.out.println(i.getName());
 		}
