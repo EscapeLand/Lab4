@@ -5,6 +5,7 @@ import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
 import org.jetbrains.annotations.NotNull;
+import track.Track;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,7 +13,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.rmi.UnexpectedException;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
@@ -232,10 +232,12 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 	
 	@Override
 	public boolean moveObject(User obj, double[] to) {
+		if(obj.getR().equals(new Track(to))) return true;
 		var from = obj.getR();
+		
 		if(getObjectsOnTrack(from).size() == 1) {
 			boolean b;
-			if (b = super.moveObject(obj, to)) removeTrack(from.getRect());
+			if (b = super.moveObject(obj, to)) super.removeTrack(from.getRect());
 			return b;
 		}
 		else return super.moveObject(obj, to);

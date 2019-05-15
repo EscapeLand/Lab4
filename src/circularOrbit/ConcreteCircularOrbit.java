@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import track.Track;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.util.*;
 import java.util.function.Consumer;
@@ -15,6 +14,7 @@ import java.util.function.Consumer;
 import static APIs.CircularOrbitAPIs.*;
 import static APIs.CircularOrbitHelper.alert;
 import static APIs.CircularOrbitHelper.generatePanel;
+import static APIs.ExceptionGroup.info;
 import static applications.PhysicalObjectFactory.insert_copy;
 import static applications.PhysicalObjectFactory.produce;
 import static circularOrbit.PhysicalObject.getDefaultComparator;
@@ -38,7 +38,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	private L centre = null;
 	
 	protected Set<E> objects = new TreeSet<>(getDefaultComparator());
-	private Set<Track> tracks = new HashSet<>();
+	protected Set<Track> tracks = new HashSet<>();
 	private Class<E> ECLASS;
 	@SuppressWarnings({"unused"})
 	private Class<L> LCLASS;
@@ -50,6 +50,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override
 	public boolean addTrack(double[] r) throws IllegalArgumentException{
+		info("addTrack", new String[]{Arrays.toString(r)});
 		assert r.length > 0;
 		if(r[0] < 0 && r[0] != -1)
 			throw new IllegalArgumentException("warning: r cannot be negative while not equal to -1. ");
@@ -58,6 +59,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override
 	public boolean removeTrack(double[] r){
+		info("removeTrack", new String[]{Arrays.toString(r)});
 		Track<E> tmp = new Track<>(r);
 		var b = tracks.remove(tmp);
 		var it = objects.iterator();
@@ -74,6 +76,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override
 	public L changeCentre(L newCenter){
+		info("changeCentre", new String[]{newCenter.toString()});
 		L prev = centre;
 		centre = newCenter;
 		return prev;
@@ -91,6 +94,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override
 	public boolean moveObject(E obj, double[] to) {
+		info("moveObject", new String[]{obj.toString(), Arrays.toString(to)});
 		if(!objects.contains(obj)) return false;
 		var tmp = new Track<>(to);
 		obj.setR(tmp);
@@ -100,12 +104,14 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override
 	public boolean removeObject(@NotNull E obj){
+		info("", new String[]{obj.toString()});
 		relationship.remove(obj);
 		return objects.remove(obj);
 	}
 	
 	@Override
 	public void setRelation(@NotNull PhysicalObject a, @NotNull PhysicalObject b, float val){
+		info("setRelation", new String[]{a.toString(), b.toString(), String.valueOf(val)});
 		assert !a.equals(b);
 		relationship.add(a);
 		relationship.add(b);
@@ -119,6 +125,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override @Nullable
 	public PhysicalObject query(String objName){
+		info("query", new String[]{objName});
 		final String name = objName.trim();
 		if(centre.getName().equals(name)) return centre;
 		return find_if(objects, e->e.getName().equals(objName));
@@ -252,6 +259,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override
 	public boolean addObject(@NotNull E newObject){
+		info("addObject", new String[]{newObject.toString()});
 		tracks.add(newObject.getR());
 		return objects.add(newObject);
 	}

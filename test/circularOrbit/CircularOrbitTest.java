@@ -81,5 +81,51 @@ public class CircularOrbitTest {
 		assertEquals(1, c.getTracks().size());
 		assertFalse(c.addTrack(new double[]{1}));
 		assertEquals(1, c.getTracks().size());
+		try{
+			c.addTrack(new double[]{-3});
+		}catch (IllegalArgumentException ex){
+			assertEquals("warning: r cannot be negative while not equal to -1. ", ex.getMessage());
+		}
+	}
+	
+	@Test @SuppressWarnings("unchecked")
+	public void testMoveObject(){
+		var c = cf.CreateAndLoad("input/AtomicStructure.txt");
+		assert c != null;
+		var s_1 = c.getObjectsOnTrack(new double[]{1});
+		assertEquals(2, s_1.size());
+		PhysicalObject e = (PhysicalObject) s_1.iterator().next();
+		var s_5 = c.getObjectsOnTrack(new double[]{5});
+		assertEquals(1, s_5.size());
+		c.moveObject(e, new double[]{5});
+		s_1 = c.getObjectsOnTrack(new double[]{1});
+		s_5 = c.getObjectsOnTrack(new double[]{5});
+		assertEquals(1, s_1.size());
+		assertEquals(2, s_5.size());
+	}
+	
+	@Test
+	public void testSetRelationship(){
+		var c = cf.CreateAndLoad("input/SocialNetworkCircle.txt");
+		assert c != null;
+		var a = c.query("TommyWong");
+		var b = c.query("LisaWong");
+		var graph = c.getGraph();
+		c.setRelation(a, b, 0);
+		assert b != null;
+		assertEquals(-1, b.getR().getRect()[0], 0);
+	}
+	
+	@Test
+	public void testToString(){
+		var a = cf.Create("AtomicStructure");
+		assert a != null;
+		assertEquals("AtomStructure", a.toString());
+		var s = cf.Create("StellarSystem");
+		assert s != null;
+		assertEquals("StellarSystem", s.toString());
+		var sn = cf.Create("SocialNetworkCircle");
+		assert sn != null;
+		assertEquals("SocialNetworkCircle", sn.toString());
 	}
 }

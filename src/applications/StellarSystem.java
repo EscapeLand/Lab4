@@ -192,6 +192,17 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 		return spec;
 	}
 	
+	@Override
+	public boolean addObject(@NotNull PlanetarySystem newObject) {
+		if(tracks.contains(newObject.getR())) return false;
+		else return super.addObject(newObject);
+	}
+	
+	@Override
+	public boolean removeObject(@NotNull PlanetarySystem obj) {
+		return super.removeTrack(obj.getR().getRect());
+	}
+	
 	/**
 	 * update the system, as it is at ({@code time += timeSpan}).
 	 */

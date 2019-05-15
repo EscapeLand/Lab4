@@ -19,6 +19,8 @@ import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static APIs.ExceptionGroup.info;
+import static APIs.ExceptionGroup.warning;
 import static java.lang.Thread.interrupted;
 
 
@@ -53,6 +55,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		}
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
+		info("visualize", new String[]{c.toString()});
 		c.process(c1 -> frame.refresh(c1, true));
 	}
 	
@@ -192,6 +195,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 	}
 	
 	private void run(@NotNull StellarSystem s) {
+		info("run", new String[]{s.toString()});
 		Map <PhysicalObject, double[]>current = new HashMap<>();
 		cells.forEach((p, o)->current.put(p, xy(p)));
 		
@@ -265,6 +269,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 				in.close();
 			} catch (IOException e) {
 				System.out.println("INFO: property not load. continued. ");
+				info("property not load. continued. ");
 			}
 			finally {
 				if(last == null) last = "input/";
@@ -272,20 +277,26 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 						"Load From", "input the path of the config file. ", last);
 			}
 			
-			if(last == null) return;
+			if(last == null) {
+				info("User exit. ");
+				return;
+			}
 			
 			try {
 				s = factory.CreateAndLoad(last);
 			} catch (ExceptionGroup exs){
 				alert(null, "Errors in profile", exs.getMessage());
+				warning(exs);
 				continue;
 			} catch (RuntimeException e) {
 				alert(null, "Error", e.getMessage());
+				warning(e);
 				continue;
 			}
 			
 			if(s == null) {
 				alert(null, "Error", "failed to create circular orbit. ");
+				info("Failed to Create CircularOrbit when scanning " + last);
 				continue;
 			}
 			
@@ -295,7 +306,8 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 				prop.store(oFile, "History");
 				oFile.close();
 			} catch (IOException e) {
-				alert(null, "Error", e.getMessage());
+				//alert(null, "Error", e.getMessage());
+				warning(e);
 				continue;
 			}
 			
