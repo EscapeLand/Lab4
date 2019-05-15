@@ -49,14 +49,27 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	}
 	
 	@Override
-	public boolean addTrack(double[] r) {
+	public boolean addTrack(double[] r) throws IllegalArgumentException{
+		assert r.length > 0;
+		if(r[0] < 0 && r[0] != -1)
+			throw new IllegalArgumentException("warning: r cannot be negative while not equal to -1. ");
 		return tracks.add(new Track<>(r));
 	}
 	
 	@Override
 	public boolean removeTrack(double[] r){
 		Track<E> tmp = new Track<>(r);
-		return tracks.remove(tmp) && objects.removeIf(e->e.getR().equals(tmp));
+		var b = tracks.remove(tmp);
+		var it = objects.iterator();
+		while(it.hasNext()){
+			var e = it.next();
+			if(e.getR().equals(tmp)) {
+				assert b;
+				relationship.remove(e);
+				it.remove();
+			}
+		}
+		return b;
 	}
 	
 	@Override
@@ -87,11 +100,13 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override
 	public boolean removeObject(@NotNull E obj){
+		relationship.remove(obj);
 		return objects.remove(obj);
 	}
 	
 	@Override
 	public void setRelation(@NotNull PhysicalObject a, @NotNull PhysicalObject b, float val){
+		assert !a.equals(b);
 		relationship.add(a);
 		relationship.add(b);
 		relationship.set(a, b, val);
@@ -241,28 +256,35 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		return objects.add(newObject);
 	}
 	
-	@Override @NotNull
-	public Set<E> getObjectsOnTrack(double[] r) {
+	/**
+	 * @param r the radius of the track
+	 * @return copy of the collection in which objects are on the given track.
+	 */
+	@NotNull
+	protected Set<E> getObjectsOnTrack(Track r) {
 		final Set<E> ret = new TreeSet<>(E.getDefaultComparator());
-		final var tmp = new Track(r);
 		forEach(e->{
-			if(e.getR().equals(tmp)) ret.add(ECLASS.cast(e));
+			if(e.getR().equals(r)) ret.add(ECLASS.cast(e));
 		});
 		return ret;
 	}
 	
 	@Override @NotNull
+	public Set<E> getObjectsOnTrack(double[] r) {
+		return getObjectsOnTrack(new Track(r));
+	}
+	
+	@Override @NotNull
 	public Set<E> getObjectsOnTrack(Double[] r) {
-		final Set<E> ret = new TreeSet<>(E.getDefaultComparator());
-		final var tmp = new Track(r);
-		forEach(e->{
-			if(e.getR().equals(tmp)) ret.add(ECLASS.cast(e));
-		});
-		return ret;
+		return getObjectsOnTrack(new Track(r));
 	}
 	
 	@Override
 	public int size() {
 		return objects.size();
+	}
+	
+	protected void clearEmptyTrack(){
+		tracks.removeIf(t -> find_if(objects, (E e) -> e.getR().equals(t)) == null);
 	}
 }

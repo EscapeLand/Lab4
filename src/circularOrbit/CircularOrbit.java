@@ -4,6 +4,7 @@ import APIs.ExceptionGroup;
 import graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import track.Track;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -25,7 +26,7 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	 * @param r add R track with radius of r.
 	 * @return if R track with radius r has already exist, return false; else true.
 	 */
-	public boolean addTrack(double[] r);
+	public boolean addTrack(double[] r) throws IllegalArgumentException;
 	
 	/**
 	 * remove R track, and apparently the objects on the tract are removed together.
@@ -97,8 +98,14 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	 */
 	@NotNull
 	public Set<E> getObjectsOnTrack(double[] r);
+	
+	/**
+	 * @param r the radius of the track
+	 * @return copy of the collection in which objects are on the given track.
+	 */
 	@NotNull
 	public Set<E> getObjectsOnTrack(Double[] r);
+	
 	
 	/**
 	 * @return the center object.

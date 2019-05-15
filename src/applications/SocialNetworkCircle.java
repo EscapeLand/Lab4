@@ -4,6 +4,7 @@ import APIs.ExceptionGroup;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,6 +22,7 @@ import java.util.regex.Pattern;
 import static APIs.CircularOrbitAPIs.getLogicalDistance;
 import static APIs.CircularOrbitAPIs.transform;
 import static APIs.CircularOrbitHelper.generatePanel;
+import static applications.PhysicalObjectFactory.insert_copy;
 
 public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser, User> {
 	public SocialNetworkCircle() {
@@ -42,23 +44,23 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 					exs.join(new IllegalArgumentException("warning: regex: group count != 2, continued. "));
 					continue;
 				}
-				List<String> list = new ArrayList<>(Arrays.asList(m.group(2).split("\\s*,\\s*")));
-				if (list.size() != 3) {
+				String[] list = (m.group(2).split("\\s*,\\s*"));
+				if (list.length != 3) {
 					exs.join(new IllegalArgumentException("warning: regex: not 3 args. continued. "));
 					continue;
 				}
 				switch (m.group(1)) {
 					case "CentralUser":
-						center = list.get(0);
-						list.add(0, "CentralUser");
-						changeCentre((CentralUser) PhysicalObjectFactory.produce(list.toArray(new String[0])));
+						center = list[0];
+						list = insert_copy(list, "CentralUser", 0);
+						changeCentre((CentralUser) PhysicalObjectFactory.produce(list));
 						break;
 					case "Friend":
-						params.add(new User(list.get(0), Integer.valueOf(list.get(1)),
-								Enum.valueOf(Gender.class, list.get(2))));
+						params.add(new User(list[0], Integer.valueOf(list[1]),
+								Enum.valueOf(Gender.class, list[2])));
 						break;
 					case "SocialTie":
-						record.add(list.toArray(new String[0]));
+						record.add(list);
 						break;
 					default:
 						exs.join(new IllegalArgumentException("warning: regex: unexpected key: " + m.group(1)));
@@ -66,26 +68,30 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 			}
 		} catch (IOException e) {
 			exs.join(e);
+			throw exs;
 		}
 		
 		
 		if (center == null) throw new RuntimeException("warning: center is not set. ");
 		
-		params.forEach(this::addObject);
+		params.forEach(super::addObject);
 		
 		for (String[] list : record) {
-			PhysicalObject q1 = query(list[0]);
-			PhysicalObject q2 = query(list[1]);
-			if (q1 == null || q2 == null) {
-				exs.join(new RuntimeException("warning: add relationship between two person not defined. "));
+			if(list[0].equals(list[1])){
+				exs.join(new RuntimeException("warning: relationship: " + list[0] + "->" + list[1]));
 				continue;
 			}
 			
-			if(q1.equals(q2)){
-				exs.join(new RuntimeException("warning: relationship: " + q1.getName() + "->" + q2.getName()));
+			PhysicalObject q1 = query(list[0]);
+			PhysicalObject q2 = query(list[1]);
+			
+			if (q1 == null || q2 == null) {
+				exs.join(new RuntimeException("warning: " + (q1 == null ? list[0] + " ": "")
+				+ (q2 == null ? list[1] + " ": "") + "not defined. "));
 				continue;
 			}
-			setRelation(q1, q2, Float.valueOf(list[2]));
+
+			super.setRelation(q1, q2, Float.valueOf(list[2]));
 		}
 		
 		
@@ -153,7 +159,6 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 				}
 				case 1: setRelation(a, b, 0); break;
 			}
-			updateR();
 			end.accept(this);
 		});
 		pnlRlt.add(cmbRltOP); pnlRlt.add(txtA); pnlRlt.add(txtB); pnlRlt.add(txtFrV);
@@ -208,19 +213,60 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 		return spec;
 	}
 	
+	@Override
+	public boolean addObject(@NotNull User newObject) {
+		var b = super.addObject(newObject);
+		moveObject(newObject, new double[]{-1});
+		return b;
+	}
+	
+	@Override
+	public boolean removeObject(@NotNull User obj) {
+		boolean b;
+		if(getObjectsOnTrack(obj.getR()).size() == 1) b = removeTrack(obj.getR().getRect());
+		else b = super.removeObject(obj);
+		
+		if(b) updateR();
+		return b;
+	}
+	
+	@Override
+	public boolean moveObject(User obj, double[] to) {
+		var from = obj.getR();
+		if(getObjectsOnTrack(from).size() == 1) {
+			boolean b;
+			if (b = super.moveObject(obj, to)) removeTrack(from.getRect());
+			return b;
+		}
+		else return super.moveObject(obj, to);
+	}
+	
+	@Override
+	public boolean removeTrack(double[] r) {
+		var b = super.removeTrack(r);
+		if(b) updateR();
+		return b;
+	}
+	
+	@Override
+	public void setRelation(@NotNull PhysicalObject a, @NotNull PhysicalObject b, float val) {
+		super.setRelation(a, b, val);
+		updateR();
+	}
+	
 	/**
 	 * update each user's track when {@code relationship} is modified.
 	 */
 	private void updateR(){
-		var graph = getGraph();
+		var relationship = getGraph();
 		Set<PhysicalObject> cur = new HashSet<>(1);
 		cur.add(center());
-		var vertex = graph.vertices(); vertex.remove(center());
+		var vertex = relationship.vertices(); vertex.remove(center());
 		int n = vertex.size() + 1;
 		
 		for(int k = 0; !vertex.isEmpty() && vertex.size() < n; k++) {
 			Set<PhysicalObject> rSet = new HashSet<>();
-			cur.forEach(p->rSet.addAll(graph.targets(p).keySet()));
+			cur.forEach(p->rSet.addAll(relationship.targets(p).keySet()));
 			final int tmp = k;
 			n = vertex.size();
 			rSet.forEach(p->{
@@ -231,12 +277,17 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 			cur = rSet;
 		}
 		
-		var edges = graph.edges();
+		vertex.forEach(v->v.setR(new double[]{-1}));
+		clearEmptyTrack();
+		
+		var edges = relationship.edges();
 		edges.forEach((d, f)->{
 			PhysicalObject a = (PhysicalObject) d[0];
 			PhysicalObject b = (PhysicalObject) d[1];
-			if(a.getR().getRect()[0] > b.getR().getRect()[0]) graph.set(a, b, 0);
+			if(a.getR().getRect()[0] > b.getR().getRect()[0]) relationship.set(a, b, 0);
 		});
+		
+		checkRep();
 	}
 	
 	/**

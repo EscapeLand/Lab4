@@ -124,10 +124,16 @@ public class CircularOrbitAPIs {
 		return null;
 	}
 	
-	@NotNull
 	public static <O, R> void transform(@NotNull Collection<O> src, @NotNull Collection<R> des, Function<O, R> func) {
 		des.clear();
 		src.forEach(s -> des.add(func.apply(s)));
+	}
+	
+	@NotNull @SuppressWarnings("unchecked")
+	public static <O, R> R[] transform(@NotNull O[] src, Function<O, R> func){
+		var arr = new Object[src.length];
+		for (int i = 0; i < src.length; i++) arr[i] = func.apply(src[i]);
+		return (R[]) arr;
 	}
 }
 

@@ -5,11 +5,14 @@ import circularOrbit.PhysicalObject;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.function.Function;
+
+import static APIs.CircularOrbitAPIs.transform;
 
 /**
  * Immutable.
  * represents a track in the circular orbit.
- * @param <E> the type of the objects on the track. (astonished)
+ * @param <E> the type of the objects on the track. (deprecated)
  */
 public class Track<E extends PhysicalObject> {
 	/*
@@ -22,6 +25,11 @@ public class Track<E extends PhysicalObject> {
 	 */
 	static public final Comparator<Track> defaultComparator = (a, b) -> Arrays.compare(a.R, b.R);
 	
+	private static double[] unboxingCast_double(Double[] d){
+		double[] arr = new double[d.length];
+		for (int i = 0; i < arr.length; i++) arr[i] = d[i];
+		return arr;
+	}
 	/**
 	 * @param R the radius. no larger than 2 elements.
 	 */
@@ -41,15 +49,7 @@ public class Track<E extends PhysicalObject> {
 	 * @param R the radius. no larger than 2 elements.
 	 */
 	public Track(Double[] R){
-		switch (R.length){
-			case 1: this.R = new double[]{R[0], R[0]}; break;
-			case 2:
-				var max = Math.max(R[0], R[1]);
-				var min = Math.min(R[0], R[1]);
-				this.R = new double[]{max, min};
-				break;
-			default: throw new IllegalArgumentException("length of R: " + R.length);
-		}
+		this(unboxingCast_double(R));
 	}
 	
 	@Override
