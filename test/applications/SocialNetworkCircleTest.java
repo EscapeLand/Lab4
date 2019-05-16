@@ -1,10 +1,12 @@
 package applications;
 
+import APIs.ExceptionGroup;
 import circularOrbit.CircularOrbit;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 import static applications.Gender.M;
 import static org.junit.Assert.assertEquals;
@@ -16,8 +18,13 @@ public class SocialNetworkCircleTest {
 	}
 	
 	@Test
-	public void loadFromFile() {
-		System.out.println(s.getGraph());
+	public void loadFromFile_error() {
+		var ss = new SocialNetworkCircle();
+		try{
+			ss.loadFromFile("NotExist.jpg");
+		} catch (ExceptionGroup exceptions) {
+			assertEquals(1, exceptions.size());
+		}
 	}
 	
 	@Test
@@ -53,5 +60,24 @@ public class SocialNetworkCircleTest {
 		c.removeTrack(new double[]{1});
 		User Frank = (User) c.query("FrankLee");
 		assertEquals(-1.0, Frank.getR().getRect()[0], 0);
+	}
+	
+	@Test
+	public void testExtendVal(){
+		var cls = s.getClass();
+		var Tom = s.query("TomWong");
+		var Lisa = s.query("LisaWong");
+		assert Tom != null;
+		assert Lisa != null;
+		try {
+			var mtd = cls.getDeclaredMethod("extendVal", User.class);
+			mtd.setAccessible(true);
+			var i = mtd.invoke(s, Tom);
+			assertEquals(1, i);
+			i = mtd.invoke(s, Lisa);
+			assertEquals(0, i);
+		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+			e.printStackTrace();
+		}
 	}
 }

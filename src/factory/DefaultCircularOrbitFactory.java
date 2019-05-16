@@ -1,9 +1,10 @@
-package circularOrbit;
+package factory;
 
 import APIs.ExceptionGroup;
 import applications.AtomStructure;
 import applications.SocialNetworkCircle;
 import applications.StellarSystem;
+import circularOrbit.CircularOrbit;
 import org.jetbrains.annotations.Nullable;
 
 public class DefaultCircularOrbitFactory implements CircularOrbitFactory {

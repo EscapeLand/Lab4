@@ -27,4 +27,7 @@ hs_err_pid*
 *.iml
 */bin
 .idea
+.css
+.img
+out/
 *.properties

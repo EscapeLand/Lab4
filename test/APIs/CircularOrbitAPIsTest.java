@@ -1,10 +1,10 @@
 package APIs;
 
-import applications.PhysicalObjectFactory;
+import factory.PhysicalObjectFactory;
 import applications.StellarSystem;
 import circularOrbit.CircularOrbit;
-import circularOrbit.CircularOrbitFactory;
-import circularOrbit.DefaultCircularOrbitFactory;
+import factory.CircularOrbitFactory;
+import factory.DefaultCircularOrbitFactory;
 import circularOrbit.PhysicalObject;
 import org.junit.Test;
 
@@ -27,23 +27,23 @@ public class CircularOrbitAPIsTest {
 	@Test @SuppressWarnings("unchecked")
 	public void getObjectDistributionEntropy() {
 		CircularOrbit atom = cf.Create("AtomicStructure");
-		var eargs = new String[]{"Electron", "1"};
+		var eArgs = new String[]{"Electron", "1"};
 		assert atom != null;
-		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eargs)));
+		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eArgs)));
 		var _1 = CircularOrbitAPIs.getObjectDistributionEntropy(atom);
-		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eargs)));
+		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eArgs)));
 		var _2 = CircularOrbitAPIs.getObjectDistributionEntropy(atom);
-		eargs[1] = "2";
-		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eargs)));
+		eArgs[1] = "2";
+		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eArgs)));
 		var _3 = CircularOrbitAPIs.getObjectDistributionEntropy(atom);
 		assertTrue(_1 < _2);
 		assertTrue(_2 < _3);
 		
 		CircularOrbit atom2 = cf.Create("AtomicStructure");
 		assert atom2 != null;
-		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eargs)));
-		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eargs)));
-		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eargs)));
+		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eArgs)));
+		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eArgs)));
+		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eArgs)));
 		var _4 = CircularOrbitAPIs.getObjectDistributionEntropy(atom2);
 		assertTrue(_4 < _3);
 	}
@@ -58,7 +58,7 @@ public class CircularOrbitAPIsTest {
 			assertEquals(((PhysicalObject) u).getR().getRect_alt()[0].intValue(),
 					CircularOrbitAPIs.getLogicalDistance(c, center, (PhysicalObject) u));
 		});
-		System.out.println("test " + c.size() + " objects. ");
+		//System.out.println("test " + c.size() + " objects. ");
 	}
 	
 	@Test @SuppressWarnings("unchecked")

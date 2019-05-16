@@ -1,8 +1,11 @@
 package circularOrbit;
 
-import applications.PhysicalObjectFactory;
+import factory.PhysicalObjectFactory;
+import factory.CircularOrbitFactory;
+import factory.DefaultCircularOrbitFactory;
 import org.junit.Test;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 import java.util.Set;
 
@@ -127,5 +130,27 @@ public class CircularOrbitTest {
 		var sn = cf.Create("SocialNetworkCircle");
 		assert sn != null;
 		assertEquals("SocialNetworkCircle", sn.toString());
+	}
+	
+	@Test
+	public void testFindTrackAndClearEmptyTrack()
+			throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
+	{
+		var a = cf.Create("AtomicStructure");
+		assert a != null;
+		var sucls = a.getClass().getSuperclass();
+		var _1 = new double[]{1};
+		var _2 = new double[]{2};
+		a.addTrack(_1);
+		a.addTrack(_2);
+		assertEquals(2, a.getTracks().size());
+		var mtd1 = sucls.getDeclaredMethod("findTrack", double[].class);
+		mtd1.setAccessible(true);
+		assertTrue((Boolean) mtd1.invoke(a, _1));
+		var mtd2 = sucls.getDeclaredMethod("clearEmptyTrack");
+		mtd2.setAccessible(true);
+		mtd2.invoke(a);
+		assertEquals(0, a.getTracks().size());
+		assertFalse((Boolean) mtd1.invoke(a, _2));
 	}
 }

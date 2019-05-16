@@ -4,6 +4,7 @@ import APIs.ExceptionGroup;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
+import factory.PhysicalObjectFactory;
 import org.jetbrains.annotations.NotNull;
 import track.Track;
 
@@ -22,7 +23,7 @@ import java.util.regex.Pattern;
 import static APIs.CircularOrbitAPIs.getLogicalDistance;
 import static APIs.CircularOrbitAPIs.transform;
 import static APIs.CircularOrbitHelper.generatePanel;
-import static applications.PhysicalObjectFactory.insert_copy;
+import static factory.PhysicalObjectFactory.insert_copy;
 
 public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser, User> {
 	public SocialNetworkCircle() {

@@ -5,30 +5,29 @@ import APIs.ExceptionGroup;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
+import factory.PhysicalObjectFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.management.InstanceAlreadyExistsException;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static APIs.CircularOrbitHelper.generatePanel;
-import static applications.PhysicalObjectFactory.insert_copy;
+import static factory.PhysicalObjectFactory.insert_copy;
 
-public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, PlanetarySystem> {
+public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet> {
 	private Thread loop;
 	private double time = 0;
 	private double timeSpan = 160000;
 	private Runnable refresh;
 	
 	public StellarSystem() {
-		super(FixedStar.class, PlanetarySystem.class);
+		super(FixedStar.class, Planet.class);
 	}
 	
 	/**
@@ -193,13 +192,13 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 	}
 	
 	@Override
-	public boolean addObject(@NotNull PlanetarySystem newObject) {
+	public boolean addObject(@NotNull Planet newObject) {
 		if(tracks.contains(newObject.getR())) return false;
 		else return super.addObject(newObject);
 	}
 	
 	@Override
-	public boolean removeObject(@NotNull PlanetarySystem obj) {
+	public boolean removeObject(@NotNull Planet obj) {
 		return super.removeTrack(obj.getR().getRect());
 	}
 	
@@ -224,13 +223,13 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 	/**
 	 * reset the system to its initial state.
 	 */
-	private void reset(){ setTime(0); }
+	void reset(){ setTime(0); }
 	
 	/**
 	 * set how much time is covered in 60ms. the greater, the faster the planets runs.
 	 * @param timeSpan time span.
 	 */
-	private void setTimeSpan(double timeSpan) {
+	void setTimeSpan(double timeSpan) {
 		this.timeSpan = timeSpan;
 	}
 	
@@ -345,7 +344,7 @@ class Planet extends PhysicalObject {
 	 * @param dir direction of its revolution
 	 * @param pos init pos of the planet.
 	 */
-	public Planet(String name, Form form, String color, double r,
+	Planet(String name, Form form, String color, double r,
 	       double[] R, double v, Dir dir, double pos) {
 		this(name, form, color, r, R, (dir == Dir.CW ? -1 : 1) * Math.abs(v / R[0]), pos);
 	}

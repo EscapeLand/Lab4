@@ -2,8 +2,8 @@ package APIs;
 
 import applications.StellarSystem;
 import circularOrbit.CircularOrbit;
-import circularOrbit.CircularOrbitFactory;
-import circularOrbit.DefaultCircularOrbitFactory;
+import factory.CircularOrbitFactory;
+import factory.DefaultCircularOrbitFactory;
 import circularOrbit.PhysicalObject;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.view.mxGraph;

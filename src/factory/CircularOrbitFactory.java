@@ -1,6 +1,7 @@
-package circularOrbit;
+package factory;
 
 import APIs.ExceptionGroup;
+import circularOrbit.CircularOrbit;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;

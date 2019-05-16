@@ -15,8 +15,8 @@ import static APIs.CircularOrbitAPIs.*;
 import static APIs.CircularOrbitHelper.alert;
 import static APIs.CircularOrbitHelper.generatePanel;
 import static APIs.ExceptionGroup.info;
-import static applications.PhysicalObjectFactory.insert_copy;
-import static applications.PhysicalObjectFactory.produce;
+import static factory.PhysicalObjectFactory.insert_copy;
+import static factory.PhysicalObjectFactory.produce;
 import static circularOrbit.PhysicalObject.getDefaultComparator;
 
 /**
