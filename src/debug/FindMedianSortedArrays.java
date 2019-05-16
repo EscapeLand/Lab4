@@ -1,3 +1,5 @@
+package debug;
+
 /**
  * Given two ordered integer arrays nums1 and nums2, with size m and n
  * Find out the median (double) of the two arrays.
@@ -27,6 +29,9 @@
 public class FindMedianSortedArrays {
 
 	public double findMedianSortedArrays(int[] A, int[] B) {
+		assert A != null || B != null;
+		if(A == null) A = new int[]{};
+		if(B == null) B = new int[]{};
 		int m = A.length;
 		int n = B.length;
 		if (m > n) {
@@ -37,13 +42,14 @@ public class FindMedianSortedArrays {
 			m = n;
 			n = tmp;
 		}
-		int iMin = 0, iMax = m, halfLen = (m + n) / 2;
+		
+		int iMin = 0, iMax = m, halfLen = (m + n + 1) / 2;
 		while (iMin <= iMax) {
-			int i = (iMin + iMax + 1) / 2;
+			int i = (iMin + iMax) / 2;
 			int j = halfLen - i;
-			if (i < iMax && B[j - 1] > A[i]) {
+			if (j > 0 && i < m && B[j - 1] > A[i]) {
 				iMin = i + 1;
-			} else if (i > iMin && A[i - 1] > B[j]) {
+			} else if (i > 0 && j < n && A[i - 1] > B[j]) {
 				iMax = i - 1;
 			} else {
 				int maxLeft = 0;
@@ -54,7 +60,7 @@ public class FindMedianSortedArrays {
 				} else {
 					maxLeft = Math.max(A[i - 1], B[j - 1]);
 				}
-				if ((m + n + 1) % 2 == 1) {
+				if ((m + n) % 2 == 1) {
 					return maxLeft;
 				}
 				int minRight = 0;
