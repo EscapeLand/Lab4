@@ -1,0 +1,28 @@
+CentralUser ::= <TommyWong,30,M>
+CentralUser ::= <TommyWong,30,dvywgdw>
+CentralUser ::= <TommyWong,-100,dvywgdw>
+SocialTie ::= <TommyWong, LisaWong, 0.98>
+SocialTie ::= <TommyWong, TomWong, 0.2>
+SocialTie ::= <TomWong, FrankLee, 0.71>
+SocialTie ::= <Tomwong>
+SocialTie ::= <FrankLee, DavidChen, 0.02>
+SocialTie ::= <Frank, DavidChen, 0.02>
+SocialTie ::= <DavidChen, DavidChen, 0.02>
+SocialTie ::= <TommyWong, DavidChen, 100>
+SocialTie ::= <TommyWong, DavidChen, -0.342>
+SocialTie ::= <TommyWong, DavidChen, 0.14285736>
+SocialTie ::= <TommyWong, DavidChen, 0.342>
+SocialTie ::= <JackMa, PonyMa, 0.999>
+
+ndbebfcfebf
+Friend ::= <LisaWong, 25, F>
+Friend ::= <TomWong, 61, M>
+Friend ::= <TomWong, -61, M>
+Friend ::= <TomWong, 61, dwguygd>
+Friend ::= <FrankLee, 42, M>
+label ::= <FrankLee, 42, M>
+Friend ::= <DavidChen, 55, M>
+Friend ::= <JackMa, 58, M>
+Friend ::= <PonyMa, 47, M>
+
+

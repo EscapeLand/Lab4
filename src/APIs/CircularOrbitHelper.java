@@ -17,11 +17,14 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
-import static exceptions.GeneralLogger.info;
-import static exceptions.GeneralLogger.warning;
+import static APIs.CircularOrbitAPIs.transform;
+import static exceptions.GeneralLogger.*;
 import static java.lang.Thread.interrupted;
 
 
@@ -334,14 +337,92 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		return n;
 	}
 	
+	@NotNull
 	public static JDialog logPanel(JFrame owner){
+		final String info = "log/info.log";
+		final String warning = "log/warning.log";
+		
 		class logP extends JDialog{
 			private logP(){
 				super(owner, "Log");
+				setBounds(160, 40, 600, 600);
+				setLayout(new FlowLayout(FlowLayout.LEFT, 8, 8));
+				setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 				setModal(true);
+				
+				final var ref = new Object() {
+					List<List> list;
+				};
+				try {
+					ref.list = loadInfo(info);
+				} catch (IOException e) {
+					alert(owner, "Error", "error when loading log. ");
+					System.exit(1);
+				}
+				
+				JPanel query = generatePanel("Query(Regex supported)");
+				JComboBox<String> cmbInfo = new JComboBox<>(new String[]{"Instance", "Level", "Operation"});
+				JComboBox<String> cmbWarn = new JComboBox<>(new String[]{"Instance", "Level", "Exception", "Class/Method"});
+				JTextField txtQuery = new JTextField(32);
+				JButton btnQuery = new JButton("Query");
+				
+				query.add(cmbInfo); query.add(cmbWarn); query.add(txtQuery); query.add(btnQuery);
+				cmbWarn.setVisible(false);
+				
+				
+				JPanel file = generatePanel("Select File");
+				JComboBox<String> cmbFile = new JComboBox<>(new String[]{"INFO", "WARNING"});
+				JLabel lblFile = new JLabel(info);
+				cmbFile.addItemListener(e->{
+					try{
+						switch (cmbFile.getSelectedIndex()){
+							case 0:
+								lblFile.setText(info); ref.list = loadInfo(info);
+								cmbInfo.setVisible(true); cmbWarn.setVisible(false);
+								break;
+							case 1:
+								lblFile.setText(warning); ref.list = loadWarning(warning);
+								cmbInfo.setVisible(false); cmbWarn.setVisible(true);
+								break;
+						}
+					} catch (IOException ex) {
+						alert(owner, "Error", "error when loading log. ");
+						System.exit(1);
+					}
+					
+				});
+				file.add(cmbFile); file.add(lblFile);
+				
+				JList<String> lstQuery = new JList<>();
+				JScrollPane scpList = new JScrollPane(lstQuery);
+				scpList.setPreferredSize(new Dimension(564, 320));
+				
+				btnQuery.addActionListener(e->{
+					int q;
+					switch (cmbFile.getSelectedIndex()){
+						case 0: q = cmbInfo.getSelectedIndex(); break;
+						case 1: q = cmbWarn.getSelectedIndex(); break;
+						default: return;
+					}
+					
+					List<String> res = new ArrayList<>();
+					
+					ref.list.forEach(l->{
+						var obj = l.get(q);
+						if((obj.toString().matches(".*" + txtQuery.getText() + ".*"))) {
+							List<String> tmp = new ArrayList<>(l.size());
+							transform(l, tmp, Object::toString);
+							res.add(String.join(" ", tmp));
+						}
+					});
+					
+					lstQuery.setListData(res.toArray(new String[0]));
+				});
+				add(file);
+				add(query);
+				add(scpList);
 			}
 		}
-		logP frame = new logP();
-		return frame;
+		return new logP();
 	}
 }

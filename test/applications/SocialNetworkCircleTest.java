@@ -1,6 +1,8 @@
 package applications;
 
 import exceptions.ExceptionGroup;
+import exceptions.GeneralLogger;
+import exceptions.LogicErrorException;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -77,4 +79,9 @@ public class SocialNetworkCircleTest {
 			e.printStackTrace();
 		}
 	}
+	
+//	@Test
+//	public void temp(){
+//		GeneralLogger.warning(new LogicErrorException("emmmm"));
+//	}
 }

@@ -246,9 +246,9 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		btnent.addActionListener(e-> lblrst.setText(String.valueOf(getObjectDistributionEntropy(this))));
 		btnLog.addActionListener(e->{
 			var logp = CircularOrbitHelper.logPanel(frame);
-			frame.setVisible(false);
+			CircularOrbitHelper.frame.setVisible(false);
 			logp.setVisible(true);
-			frame.setVisible(true);
+			CircularOrbitHelper.frame.setVisible(true);
 		});
 		misc.add(btnent); misc.add(lblrst); misc.add(btnLog);
 		common.add(misc);
