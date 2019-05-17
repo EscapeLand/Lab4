@@ -14,10 +14,9 @@ import java.util.function.Consumer;
 import static APIs.CircularOrbitAPIs.*;
 import static APIs.CircularOrbitHelper.alert;
 import static APIs.CircularOrbitHelper.generatePanel;
-import static APIs.ExceptionGroup.info;
-import static factory.PhysicalObjectFactory.insert_copy;
-import static factory.PhysicalObjectFactory.produce;
 import static circularOrbit.PhysicalObject.getDefaultComparator;
+import static exceptions.GeneralLogger.info;
+import static factory.PhysicalObjectFactory.produce;
 
 /**
  * Mutable.
@@ -143,6 +142,15 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		return ret;
 	}
 	
+	@Override
+	public JFrame process(Consumer<CircularOrbit> end) {
+		JFrame frame = new JFrame(getClass().getSimpleName());
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		frame.setLayout(null);
+		return frame;
+	}
+	
 	/**
 	 * add User Interface controls on the frame.
 	 * @param frame where to add controls.
@@ -158,7 +166,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		
 		JPanel trackOP = generatePanel("Track Operation");
 		JPanel objOP = generatePanel("Object Operation");
-		JPanel entropy = generatePanel("Entropy");
+		JPanel misc = generatePanel("Miscellaneous");
 		var ops = new String[]{"Add", "Remove"};
 		
 		JComboBox<String> cmbOps = new JComboBox<>(ops);
@@ -200,14 +208,9 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 				case 0:
 				{
 					var form = CircularOrbitHelper.promptForm(frame, "Add object", E.hintForUser(ECLASS));
-					switch (form.length){
-						case 1: form = insert_copy(form, "Electron", 0); break;
-						case 4: form = insert_copy(form, "User", 0); break;
-						case 8: form = insert_copy(form, "Planet", 0); break;
-						default: break;
-					}
-					var p = produce(form);
-					if(p != null) addObject(ECLASS.cast(p));
+					if(form == null) return;
+					var p = produce(ECLASS, form);
+					addObject(ECLASS.cast(p));
 					checkRep();                 //post condition
 					break;
 				}
@@ -238,10 +241,17 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		
 		
 		JButton btnent = new JButton("Calculate Entropy");
+		JButton btnLog = new JButton("Log Panel");
 		JLabel lblrst = new JLabel("");
 		btnent.addActionListener(e-> lblrst.setText(String.valueOf(getObjectDistributionEntropy(this))));
-		entropy.add(btnent); entropy.add(lblrst);
-		common.add(entropy);
+		btnLog.addActionListener(e->{
+			var logp = CircularOrbitHelper.logPanel(frame);
+			frame.setVisible(false);
+			logp.setVisible(true);
+			frame.setVisible(true);
+		});
+		misc.add(btnent); misc.add(lblrst); misc.add(btnLog);
+		common.add(misc);
 		
 		common.setBounds(8, 8, 336, 224);
 		return common;

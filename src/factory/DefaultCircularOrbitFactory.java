@@ -1,6 +1,6 @@
 package factory;
 
-import APIs.ExceptionGroup;
+import exceptions.ExceptionGroup;
 import applications.AtomStructure;
 import applications.SocialNetworkCircle;
 import applications.StellarSystem;

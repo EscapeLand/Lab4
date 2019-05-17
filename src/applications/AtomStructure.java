@@ -1,10 +1,11 @@
 package applications;
 
 import APIs.CircularOrbitAPIs;
-import APIs.ExceptionGroup;
+import exceptions.ExceptionGroup;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
+import exceptions.LogicErrorException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import track.Track;
@@ -38,7 +39,18 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 		String[] txt = new String[3];
 		
 		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-			for (int i = 0; i < 3; i++) txt[i] = reader.readLine();
+			for (int i = 0; i < 3; i++) {
+				txt[i] = reader.readLine().trim();
+				if(txt[i] == null) {
+					exs.join(new LogicErrorException("Profile of AtomStructure needs at least 3 lines. returned. "));
+					throw exs;
+				}
+				if(txt[i].isEmpty()) i--;
+			}
+			if(reader.readLine() != null) {
+				exs.join(new LogicErrorException("Profile of AtomStructure needs only 3 lines. returned. "));
+				throw exs;
+			}
 		} catch (Exception e) {
 			exs.join(e);
 			throw exs;
@@ -47,30 +59,34 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 		Arrays.sort(txt);
 		Matcher m = patterns[0].matcher(txt[0]);
 		if (!m.find() || m.groupCount() != 1) {
-			exs.join(new IllegalArgumentException("warning: regex: ElementName != 1. "));
+			exs.join(new IllegalArgumentException("warning: regex: ElementName != 1. continued. "));
 		}
 		
 		changeCentre(new Kernel(m.group(1)));
 		
 		m = patterns[2].matcher(txt[2]);
 		if (!m.find() || m.groupCount() != 1) {
-			exs.join(new IllegalArgumentException("warning: regex: NumberOfTracks != 1. "));
+			exs.join(new IllegalArgumentException("regex: NumberOfTracks != 1. continued. "));
 		}
 		int n = Integer.valueOf(m.group(1));
 		
 		m = patterns[1].matcher(txt[1]);
 		if (!m.find() || m.groupCount() != 1) {
-			exs.join(new IllegalArgumentException("warning: regex: NumberOfElectron != 1. "));
+			exs.join(new IllegalArgumentException("regex: NumberOfElectron != 1. continued. "));
 		}
 		
 		int[] num = new int[n];
 		String[] tmp = m.group(1).split("[/;]");
 		if(tmp.length != 2 * n) {
-			exs.join(new IllegalArgumentException("warning: track number != sizeof(ObjectGroup)"));
+			exs.join(new IllegalArgumentException("track number != sizeof(ObjectGroup). continued. "));
 		}
 		
 		for (int i = 0; i < n; i++) {
-			num[i] = Integer.valueOf(tmp[2 * i + 1]);
+			try{
+				num[i] = Integer.valueOf(tmp[2 * i + 1]);
+			} catch (NumberFormatException e) {
+				exs.join(new IllegalArgumentException("Number of electron is not numeric. continued. ", e));
+			}
 		}
 		
 		for (int i = 0; i < n; i++) {
@@ -115,15 +131,13 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 	}
 	
 	@Override
-	public void process(Consumer<CircularOrbit> refresh) {
-		JFrame frame = new JFrame(getClass().getSimpleName());
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
-		frame.setLayout(null);
+	public JFrame process(Consumer<CircularOrbit> refresh) {
+		var frame = super.process(refresh);
 		var spc = this.test(frame, refresh);
 		
 		frame.setBounds(1000,232,364,spc.getY() + spc.getHeight() + 48);
 		frame.setVisible(true);
+		return frame;
 	}
 	
 	@Override

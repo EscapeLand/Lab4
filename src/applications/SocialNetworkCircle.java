@@ -1,9 +1,10 @@
 package applications;
 
-import APIs.ExceptionGroup;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
+import exceptions.ExceptionGroup;
+import exceptions.LogicErrorException;
 import factory.PhysicalObjectFactory;
 import org.jetbrains.annotations.NotNull;
 import track.Track;
@@ -23,7 +24,7 @@ import java.util.regex.Pattern;
 import static APIs.CircularOrbitAPIs.getLogicalDistance;
 import static APIs.CircularOrbitAPIs.transform;
 import static APIs.CircularOrbitHelper.generatePanel;
-import static factory.PhysicalObjectFactory.insert_copy;
+import static factory.PhysicalObjectFactory.produce;
 
 public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser, User> {
 	public SocialNetworkCircle() {
@@ -36,36 +37,34 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 		ExceptionGroup exs = new ExceptionGroup();
 		List<User> params = new ArrayList<>();
 		Set<String[]> record = new HashSet<>();
-		String center = null;
+		
 		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
 			for (String buffer = reader.readLine(); buffer != null; buffer = reader.readLine()) {
 				if (buffer.isEmpty()) continue;
-				Matcher m = Pattern.compile("([a-zA-Z]+)\\s?::=\\s?<(.*)>").matcher(buffer);
-				if (!m.find() || m.groupCount() != 2) {
-					exs.join(new IllegalArgumentException("warning: regex: group count != 2, continued. "));
-					continue;
+				try{
+					Matcher m = Pattern.compile("([a-zA-Z]+)\\s?::=\\s?<(.*)>").matcher(buffer);
+					if (!m.find() || m.groupCount() != 2)
+						throw new IllegalArgumentException("regex: group count != 2, continued. ");
+					String[] list = (m.group(2).split("\\s*,\\s*"));
+					if (list.length != 3) throw new IllegalArgumentException("regex: not 3 args. continued. ");
+					switch (m.group(1)) {
+						case "CentralUser":
+							changeCentre((CentralUser) produce(CentralUser.class, list));
+							break;
+						case "Friend":
+							params.add(new User(list[0], Integer.valueOf(list[1]),
+									Enum.valueOf(Gender.class, list[2])));
+							break;
+						case "SocialTie":
+							record.add(list);
+							break;
+						default:
+							throw new IllegalArgumentException("regex: unexpected key: " + m.group(1) + ". continued. ");
+					}
+				} catch (IllegalArgumentException e) {
+					exs.join(e);
 				}
-				String[] list = (m.group(2).split("\\s*,\\s*"));
-				if (list.length != 3) {
-					exs.join(new IllegalArgumentException("warning: regex: not 3 args. continued. "));
-					continue;
-				}
-				switch (m.group(1)) {
-					case "CentralUser":
-						center = list[0];
-						list = insert_copy(list, "CentralUser", 0);
-						changeCentre((CentralUser) PhysicalObjectFactory.produce(list));
-						break;
-					case "Friend":
-						params.add(new User(list[0], Integer.valueOf(list[1]),
-								Enum.valueOf(Gender.class, list[2])));
-						break;
-					case "SocialTie":
-						record.add(list);
-						break;
-					default:
-						exs.join(new IllegalArgumentException("warning: regex: unexpected key: " + m.group(1)));
-				}
+				
 			}
 		} catch (IOException e) {
 			exs.join(e);
@@ -73,13 +72,13 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 		}
 		
 		
-		if (center == null) throw new RuntimeException("warning: center is not set. ");
+		if (center() == null) throw new LogicErrorException("center is not set. returned. ");
 		
 		params.forEach(super::addObject);
 		
 		for (String[] list : record) {
 			if(list[0].equals(list[1])){
-				exs.join(new RuntimeException("warning: relationship: " + list[0] + "->" + list[1]));
+				exs.join(new LogicErrorException("relationship: " + list[0] + "->" + list[1] + ". continued. "));
 				continue;
 			}
 			
@@ -87,8 +86,8 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 			PhysicalObject q2 = query(list[1]);
 			
 			if (q1 == null || q2 == null) {
-				exs.join(new RuntimeException("warning: " + (q1 == null ? list[0] + " ": "")
-				+ (q2 == null ? list[1] + " ": "") + "not defined. "));
+				exs.join(new LogicErrorException("warning: " + (q1 == null ? list[0] + " ": "")
+				+ (q2 == null ? list[1] + " ": "") + "not defined. continued. "));
 				continue;
 			}
 
@@ -104,15 +103,13 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 	}
 	
 	@Override
-	public void process(Consumer<CircularOrbit> refresh) {
-		JFrame frame = new JFrame(getClass().getSimpleName());
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
-		frame.setLayout(null);
+	public JFrame process(Consumer<CircularOrbit> refresh) {
+		JFrame frame = super.process(refresh);
 		this.test(frame, refresh);
 		
 		frame.setBounds(1000,232,396,512);
 		frame.setVisible(true);
+		return frame;
 	}
 	
 	@Override
@@ -273,9 +270,7 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 			final int tmp = k;
 			n = vertex.size();
 			rSet.forEach(p->{
-				if(vertex.remove(p)){
-					moveObject((User) p, new double[]{tmp + 1});
-				}
+				if(vertex.remove(p)) moveObject((User) p, new double[]{tmp + 1});
 			});
 			cur = rSet;
 		}

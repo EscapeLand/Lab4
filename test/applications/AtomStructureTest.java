@@ -1,6 +1,6 @@
 package applications;
 
-import APIs.ExceptionGroup;
+import exceptions.ExceptionGroup;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;

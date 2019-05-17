@@ -1,11 +1,11 @@
 package circularOrbit;
 
-import APIs.ExceptionGroup;
+import exceptions.ExceptionGroup;
 import graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import track.Track;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
@@ -119,8 +119,9 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	/**
 	 * process user operation.
 	 * @param end what to do when end operation. (must be CircularOrbitHelper.refresh)
+	 * @return JFrame to control the CircularOrbit
 	 */
-	public void process(Consumer<CircularOrbit> end);
+	public JFrame process(Consumer<CircularOrbit> end);
 	
 	/**
 	 * @return the number of objects on tracks. (center is NOT included)

@@ -2,6 +2,7 @@ package APIs;
 
 import applications.StellarSystem;
 import circularOrbit.CircularOrbit;
+import exceptions.ExceptionGroup;
 import factory.CircularOrbitFactory;
 import factory.DefaultCircularOrbitFactory;
 import circularOrbit.PhysicalObject;
@@ -19,8 +20,8 @@ import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static APIs.ExceptionGroup.info;
-import static APIs.ExceptionGroup.warning;
+import static exceptions.GeneralLogger.info;
+import static exceptions.GeneralLogger.warning;
 import static java.lang.Thread.interrupted;
 
 
@@ -33,6 +34,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 			Comparator.comparingDouble((Double[] a) -> a[0]).thenComparingDouble(a -> a[1]));
 	private Map<PhysicalObject, Object> cells = new TreeMap<>(PhysicalObject.getDefaultComparator());
 	private Set<Object> circles = new HashSet<>();
+	public static CircularOrbitHelper frame;
 	
 	private CircularOrbitHelper(@NotNull CircularOrbit<L, E> c, int length)
 	{
@@ -48,7 +50,11 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 	
 	@SuppressWarnings("unchecked")
 	static<L extends PhysicalObject, E extends PhysicalObject> void visualize(CircularOrbit<L, E> c){
-		CircularOrbitHelper<L, E> frame = new CircularOrbitHelper<>(c, 800);
+		if(frame != null) {
+			frame.setVisible(true);
+			return;
+		}
+		frame = new CircularOrbitHelper<>(c, 800);
 		if(c instanceof StellarSystem) {
 			((StellarSystem) c).register(() -> frame.run((StellarSystem) c));
 			((StellarSystem) c).start();
@@ -101,9 +107,12 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		return f.flag ? p.toString() : null;
 	}
 	
+	@Nullable
 	public static String[] promptForm(@Nullable JFrame owner, String title, @NotNull String[] form){
+		class flag{boolean flag = false;}
 		JTextField[] formArray = new JTextField[form.length];
 		String[] input = new String[form.length];
+		flag f= new flag();
 		
 		class promptDialog extends JDialog{
 			private promptDialog(){
@@ -131,6 +140,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 					for (int i = 0; i < formArray.length; i++) {
 						input[i] = formArray[i].getText();
 					}
+					f.flag = true;
 					this.dispose();
 				});
 				setModal(true);
@@ -138,7 +148,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		}
 		promptDialog dialog = new promptDialog();
 		dialog.setVisible(true);
-		return input;
+		return f.flag ? input : null;
 	}
 	
 	public static void alert(@Nullable JFrame owner, String title, String msg){
@@ -322,5 +332,16 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		n.setBorder(BorderFactory.createTitledBorder(title));
 		n.setLayout(new FlowLayout(FlowLayout.CENTER, 8, 8));
 		return n;
+	}
+	
+	public static JDialog logPanel(JFrame owner){
+		class logP extends JDialog{
+			private logP(){
+				super(owner, "Log");
+				setModal(true);
+			}
+		}
+		logP frame = new logP();
+		return frame;
 	}
 }

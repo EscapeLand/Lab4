@@ -15,20 +15,20 @@ public class CircularOrbitTest {
 	private CircularOrbitFactory cf = new DefaultCircularOrbitFactory();
 	
 	@Test @SuppressWarnings("unchecked")
-	public void testAddAndRemove(){
-		var eargs = new String[]{"Electron", "1"};
+	public void testAddAndRemove() throws ClassNotFoundException {
+		var eargs = new String[]{"1"};
 		CircularOrbit c = cf.Create("AtomicStructure");
-		var e = PhysicalObjectFactory.produce(eargs);
+		var ecls = Class.forName("applications.Electron");
+		var e = PhysicalObjectFactory.produce(ecls, eargs);
 		assert c != null;
-		assert e != null;
 		c.addObject(e);
 		assertEquals(1, c.size());
-		eargs[1] = "2";
-		assertTrue(c.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eargs))));
+		eargs[0] = "2";
+		assertTrue(c.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eargs))));
 		assertEquals(2, c.size());
 		assertTrue(c.removeObject(e));
 		assertEquals(1, c.size());
-		assertFalse(c.removeObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eargs))));
+		assertFalse(c.removeObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eargs))));
 	}
 	
 	@Test @SuppressWarnings("unchecked")

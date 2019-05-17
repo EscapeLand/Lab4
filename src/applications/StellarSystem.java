@@ -1,24 +1,29 @@
 package applications;
 
 import APIs.CircularOrbitAPIs;
-import APIs.ExceptionGroup;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
+import exceptions.ExceptionGroup;
+import exceptions.LogicErrorException;
 import factory.PhysicalObjectFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static APIs.CircularOrbitHelper.generatePanel;
-import static factory.PhysicalObjectFactory.insert_copy;
 
 public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet> {
 	private Thread loop;
@@ -52,51 +57,44 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 		File file = new File(path);
 		ExceptionGroup exs = new ExceptionGroup();
 		try(BufferedReader reader = new BufferedReader(new FileReader(file))) {
-		
-		for (String buffer = reader.readLine(); buffer != null; buffer = reader.readLine()) {
-			if (buffer.isEmpty()) continue;
-			Matcher m = Pattern.compile("([a-zA-Z]+)\\s?::=\\s?<(.*)>").matcher(buffer);
-			if (!m.find() || m.groupCount() != 2) {
-				exs.join(new IllegalArgumentException("warning: regex: group count != 2, continued. "));
-				continue;
-			}
-			switch (m.group(1)) {
-				case "Stellar": {
-					String[] list = m.group(2).split(",");
-					if (list.length != 3) {
-						exs.join(new IllegalArgumentException("warning: regex: Stellar: not 3 args. continued. "));
-						continue;
+			for (String buffer = reader.readLine(); buffer != null; buffer = reader.readLine()) {
+				try{
+					if (buffer.isEmpty()) continue;
+					Matcher m = Pattern.compile("([a-zA-Z]+)\\s?::=\\s?<(.*)>").matcher(buffer);
+					if (!m.find() || m.groupCount() != 2)
+						throw new IllegalArgumentException("regex: group count != 2, continued. ");
+					switch (m.group(1)) {
+						case "Stellar": {
+							String[] list = m.group(2).split(",");
+							if (list.length != 3)
+								throw new IllegalArgumentException("regex: Stellar: not 3 args. continued. ");
+							
+							FixedStar f = new FixedStar(list[0], Double.valueOf(list[1]), Double.valueOf(list[2]));
+							changeCentre(f);
+							break;
+						}
+						case "Planet": {
+							String[] list = m.group(2).split(",");
+							
+							if (list.length != 8) {
+								exs.join(new IllegalArgumentException("regex: Planet: not 8 args. continued. "));
+							}
+							if(query(list[0]) != null)
+								throw new LogicErrorException(list[0] + " already exist. continued. ");
+							PhysicalObject p = PhysicalObjectFactory.produce(Planet.class, list);
+							assert p instanceof Planet;
+							if (!addObject(new PlanetarySystem((Planet) p)))
+								throw new RuntimeException("failed to add " + list[1] + ". continued. ");
+							break;
+						}
+						default:
+							throw new IllegalArgumentException("regex: unexpected key: " + m.group(1) + "continued. ");
 					}
-					FixedStar f = new FixedStar(list[0], Float.valueOf(list[1]), Double.valueOf(list[2]));
-					changeCentre(f);
-					break;
+				} catch (IllegalArgumentException | LogicErrorException e) {
+					exs.join(e);
 				}
-				case "Planet": {
-					String[] list = m.group(2).split(",");
-					
-					if (list.length != 8) {
-						exs.join(new IllegalArgumentException("warning: regex: Planet: not 8 args. continued. "));
-					}
-					if(query(list[0]) != null) {
-						exs.join(new RuntimeException("warning: " + list[0] + " already exist. "));
-						continue;
-					}
-					list = insert_copy(list,  "Planet", 0);
-					PhysicalObject p = PhysicalObjectFactory.produce(list);
-					assert p instanceof Planet;
-					if (!addObject(new PlanetarySystem((Planet) p))){
-						exs.join(new RuntimeException("warning: failed to add " + list[1]));
-						continue;
-					}
-					break;
-				}
-				default:
-					exs.join(new IllegalArgumentException("warning: regex: unexpected key: " + m.group(1)));
 			}
-			
-			}
-			
-		} catch (Exception e) {
+		} catch (IOException e) {
 			exs.join(e);
 			throw exs;
 		}
@@ -106,15 +104,13 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 	}
 	
 	@Override
-	public void process(Consumer<CircularOrbit> refresh) {
-		JFrame frame = new JFrame(getClass().getSimpleName());
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
-		frame.setLayout(null);
+	public JFrame process(Consumer<CircularOrbit> refresh) {
+		JFrame frame = super.process(refresh);
 		this.test(frame, refresh);
 		
 		frame.setBounds(1000,232,364,512);
 		frame.setVisible(true);
+		return frame;
 	}
 	
 	@Override

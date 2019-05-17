@@ -1,53 +1,45 @@
 package factory;
 
 import circularOrbit.PhysicalObject;
+import exceptions.GeneralLogger;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.InvocationTargetException;
 
 public class PhysicalObjectFactory {
-	@Nullable @SuppressWarnings("unchecked")
-	public static PhysicalObject produce(@NotNull String[] args){
-		assert args.length > 0;
+	
+	@NotNull @SuppressWarnings("unchecked")
+	public static PhysicalObject produce(Class cls, @NotNull String[] args) throws IllegalArgumentException{
+		assert cls.getPackageName().equals("applications");
+		
 		try{
-			var cls = Class.forName("applications." + args[0]);
 			var ctor = cls.getDeclaredConstructors()[0];
 			ctor.setAccessible(true);
-			assert ctor.getParameterTypes().length == args.length - 1;
-			switch(args[0]){
+			assert ctor.getParameterTypes().length == args.length;
+			switch(cls.getSimpleName()){
 				case "Planet":
 					var ty = ctor.getParameterTypes();
-					return (PhysicalObject) ctor.newInstance(args[1], Enum.valueOf((Class<Enum>)ty[1], args[2]), args[3],
-							Double.valueOf(args[4]), new double[]{Double.valueOf(args[5])}, Double.valueOf(args[6]),
-							Enum.valueOf((Class<Enum>)ty[6], args[7]), Float.valueOf(args[8]));
+					return (PhysicalObject) ctor.newInstance(args[0], Enum.valueOf((Class<Enum>)ty[1], args[1]), args[2],
+							Double.valueOf(args[3]), new double[]{Double.valueOf(args[4])}, Double.valueOf(args[5]),
+							Enum.valueOf((Class<Enum>)ty[6], args[6]), Float.valueOf(args[7]));
 				case "Electron":
-					return (PhysicalObject) ctor.newInstance(Float.valueOf(args[1]));
+					return (PhysicalObject) ctor.newInstance(Float.valueOf(args[0]));
 				case "User":{
 					//unused
 					var em = (Class<Enum>) Class.forName("applications.Gender");
-					return (PhysicalObject) ctor.newInstance(Double.valueOf(args[1]), args[2], Integer.valueOf(args[3]),
-							Enum.valueOf(em, args[4]));
+					return (PhysicalObject) ctor.newInstance(Double.valueOf(args[0]), args[1], Integer.valueOf(args[2]),
+							Enum.valueOf(em, args[3]));
 				}
 				case "CentralUser":{
 					var em = (Class<Enum>) Class.forName("applications.Gender");
-					return (PhysicalObject) ctor.newInstance(args[1], Integer.valueOf(args[2]), Enum.valueOf(em, args[3]));
+					return (PhysicalObject) ctor.newInstance(args[0], Integer.valueOf(args[1]), Enum.valueOf(em, args[2]));
 				}
-				default: return null;
+				default: throw new IllegalArgumentException("unknown Class: " + cls.getSimpleName() + ". continued. ");
 			}
-		} catch (Exception e) {
-			System.out.println("warning: " + e.getMessage());
+		} catch (NullPointerException | InstantiationException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+			GeneralLogger.severe(e);
 			System.exit(1);
 			return null;
 		}
 	}
-	
-	public static String[] insert_copy(String[] arr, String elm, int pos){
-		assert pos <= arr.length + 1;
-		String[] r = new String[arr.length + 1];
-		int i = 0;
-		for(; i < pos; i++) r[i] = arr[i];
-		r[i++] = elm;
-		for(;i < r.length; i++) r[i] = arr[i - 1];
-		return r;
-	}
-	
 }

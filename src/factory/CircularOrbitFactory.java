@@ -1,10 +1,8 @@
 package factory;
 
-import APIs.ExceptionGroup;
+import exceptions.ExceptionGroup;
 import circularOrbit.CircularOrbit;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
 
 public interface CircularOrbitFactory {
 	@Nullable

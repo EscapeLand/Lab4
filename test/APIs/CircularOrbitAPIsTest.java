@@ -25,25 +25,26 @@ public class CircularOrbitAPIsTest {
 	}
 	
 	@Test @SuppressWarnings("unchecked")
-	public void getObjectDistributionEntropy() {
+	public void getObjectDistributionEntropy() throws ClassNotFoundException {
 		CircularOrbit atom = cf.Create("AtomicStructure");
-		var eArgs = new String[]{"Electron", "1"};
+		var eArgs = new String[]{"1"};
+		var ecls = Class.forName("applications.Electron");
 		assert atom != null;
-		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eArgs)));
+		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eArgs)));
 		var _1 = CircularOrbitAPIs.getObjectDistributionEntropy(atom);
-		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eArgs)));
+		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eArgs)));
 		var _2 = CircularOrbitAPIs.getObjectDistributionEntropy(atom);
-		eArgs[1] = "2";
-		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eArgs)));
+		eArgs[0] = "2";
+		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eArgs)));
 		var _3 = CircularOrbitAPIs.getObjectDistributionEntropy(atom);
 		assertTrue(_1 < _2);
 		assertTrue(_2 < _3);
 		
 		CircularOrbit atom2 = cf.Create("AtomicStructure");
 		assert atom2 != null;
-		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eArgs)));
-		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eArgs)));
-		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eArgs)));
+		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eArgs)));
+		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eArgs)));
+		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eArgs)));
 		var _4 = CircularOrbitAPIs.getObjectDistributionEntropy(atom2);
 		assertTrue(_4 < _3);
 	}
@@ -62,13 +63,13 @@ public class CircularOrbitAPIsTest {
 	}
 	
 	@Test @SuppressWarnings("unchecked")
-	public void getPhysicalDistance() {
+	public void getPhysicalDistance() throws ClassNotFoundException {
 		CircularOrbit c = new StellarSystem();
-		var _3 = PhysicalObjectFactory.produce(
-				new String[]{"Planet", "_3", "Solid", "color", "0", "3", "0", "CW", "0"});
-		var _4 = PhysicalObjectFactory.produce(
-				new String[]{"Planet", "_4", "Solid", "color", "0", "4", "0", "CW", "90"});
-		assert _3 != null && _4 != null;
+		var pcls = Class.forName("applications.Planet");
+		var _3 = PhysicalObjectFactory.produce(pcls,
+				new String[]{"_3", "Solid", "color", "0", "3", "0", "CW", "0"});
+		var _4 = PhysicalObjectFactory.produce(Class.forName("applications.Planet"),
+				new String[]{"_4", "Solid", "color", "0", "4", "0", "CW", "90"});
 		c.addObject(_3);
 		c.addObject(_4);
 		assertEquals(5.0, CircularOrbitAPIs.getPhysicalDistance(c, _3, _4), 1E-4);

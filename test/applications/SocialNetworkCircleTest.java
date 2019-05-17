@@ -1,11 +1,8 @@
 package applications;
 
-import APIs.ExceptionGroup;
-import circularOrbit.CircularOrbit;
-import org.jetbrains.annotations.NotNull;
+import exceptions.ExceptionGroup;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 import static applications.Gender.M;
