@@ -49,16 +49,15 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override
 	public boolean addTrack(double[] r) throws IllegalArgumentException{
-		info("addTrack", new String[]{Arrays.toString(r)});
 		assert r.length > 0;
 		if(r[0] < 0 && r[0] != -1)
 			throw new IllegalArgumentException("warning: r cannot be negative while not equal to -1. ");
+		info("addTrack", new String[]{Arrays.toString(r)});
 		return tracks.add(new Track<>(r));
 	}
 	
 	@Override
 	public boolean removeTrack(double[] r){
-		info("removeTrack", new String[]{Arrays.toString(r)});
 		Track<E> tmp = new Track<>(r);
 		var b = tracks.remove(tmp);
 		var it = objects.iterator();
@@ -70,11 +69,13 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 				it.remove();
 			}
 		}
+		info("removeTrack", new String[]{Arrays.toString(r)});
 		return b;
 	}
 	
 	@Override
 	public L changeCentre(L newCenter){
+		if(Objects.equals(centre, newCenter)) return centre;
 		info("changeCentre", new String[]{newCenter.toString()});
 		L prev = centre;
 		centre = newCenter;
@@ -93,17 +94,18 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override
 	public boolean moveObject(E obj, double[] to) {
-		info("moveObject", new String[]{obj.toString(), Arrays.toString(to)});
 		if(!objects.contains(obj)) return false;
 		var tmp = new Track<>(to);
 		obj.setR(tmp);
 		addTrack(to);
+		
+		info("moveObject", new String[]{obj.toString(), Arrays.toString(to)});
 		return true;
 	}
 	
 	@Override
 	public boolean removeObject(@NotNull E obj){
-		info("", new String[]{obj.toString()});
+		info("removeObject", new String[]{obj.toString()});
 		relationship.remove(obj);
 		return objects.remove(obj);
 	}

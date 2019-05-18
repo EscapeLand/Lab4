@@ -3,8 +3,7 @@ package applications;
 import exceptions.ExceptionGroup;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class StellarSystemTest {
 	
@@ -39,5 +38,17 @@ public class StellarSystemTest {
 		assertEquals(1.0, Math.toDegrees(planet.getPos()), 1e-5);
 		s.reset();
 		assertEquals(0, planet.getPos(), 0);
+	}
+	
+	@Test
+	public void loadFromFile_exception(){
+		StellarSystem s = new StellarSystem();
+		try{
+			s.loadFromFile("input/StellarSystem_error.txt");
+		} catch (ExceptionGroup exceptions) {
+			assertFalse(exceptions.isEmpty());
+			System.out.println(exceptions.size());
+		}
+		
 	}
 }

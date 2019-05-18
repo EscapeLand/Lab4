@@ -15,6 +15,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
@@ -44,9 +46,10 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 				try{
 					Matcher m = Pattern.compile("([a-zA-Z]+)\\s?::=\\s?<(.*)>").matcher(buffer);
 					if (!m.find() || m.groupCount() != 2)
-						throw new IllegalArgumentException("regex: group count != 2, continued. ");
+						throw new IllegalArgumentException("regex: cannot match (" + buffer + "), continued. ");
 					String[] list = (m.group(2).split("\\s*,\\s*"));
-					if (list.length != 3) throw new IllegalArgumentException("regex: not 3 args. continued. ");
+					if (list.length != 3)
+						throw new IllegalArgumentException("regex: (" + buffer + ")not 3 args. continued. ");
 					switch (m.group(1)) {
 						case "CentralUser":
 							changeCentre((CentralUser) produce(CentralUser.class, list));
@@ -59,7 +62,7 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 							record.add(list);
 							break;
 						default:
-							throw new IllegalArgumentException("regex: unexpected key: " + m.group(1) + ". continued. ");
+							throw new IllegalArgumentException("regex: unexpected label: " + m.group(1) + ". continued. ");
 					}
 				} catch (IllegalArgumentException e) {
 					exs.join(e);
@@ -90,8 +93,19 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 				+ (q2 == null ? list[1] + " ": "") + "not defined. continued. "));
 				continue;
 			}
-
-			super.setRelation(q1, q2, Float.valueOf(list[2]));
+			
+			try{
+				var split = list[2].split(".");
+				if(split.length == 2 && split[1].length() > 3){
+					split[1] = split[1].substring(0, 3);
+					var tmp = list[2];
+					list[2] = String.join(".", split);
+					exs.join(new IllegalArgumentException(tmp + " more than 3 decimal. truncated. "));
+				}
+				super.setRelation(q1, q2, Float.valueOf(list[2]));
+			} catch (IllegalArgumentException e) {
+				exs.join(e);
+			}
 		}
 		
 		
@@ -249,9 +263,17 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 	}
 	
 	@Override
-	public void setRelation(@NotNull PhysicalObject a, @NotNull PhysicalObject b, float val) {
-		super.setRelation(a, b, val);
+	public void setRelation(@NotNull PhysicalObject a, @NotNull PhysicalObject b, float val)
+			throws IllegalArgumentException
+	{
+		DecimalFormat df = new DecimalFormat("#.000");
+		var str = df.format(val);
+		float v = Float.valueOf(str);
+		super.setRelation(a, b, v);
 		updateR();
+		if(v != val){
+			throw new IllegalArgumentException(val + " more than 3 decimal. truncated. ");
+		}
 	}
 	
 	/**

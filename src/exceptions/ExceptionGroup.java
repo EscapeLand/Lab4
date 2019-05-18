@@ -12,10 +12,9 @@ import java.util.List;
 public class ExceptionGroup extends RuntimeException implements Iterable<Exception>{
 	private List<Exception> exs = new ArrayList<>();
 	
-	
-	public boolean join(ExceptionGroup ex) {return merge(ex);}
 	public boolean join(Exception ex){
-		return exs.add(ex);
+		if(ex instanceof ExceptionGroup) return merge((ExceptionGroup) ex);
+		else return exs.add(ex);
 	}
 	
 	@Override
@@ -37,16 +36,6 @@ public class ExceptionGroup extends RuntimeException implements Iterable<Excepti
 		exs.forEach(Exception::printStackTrace);
 	}
 	
-	@Override
-	public void printStackTrace(PrintStream s) {
-		exs.forEach(e->e.printStackTrace(s));
-	}
-	
-	@Override
-	public void printStackTrace(PrintWriter s) {
-		exs.forEach(e->e.printStackTrace(s));
-	}
-	
 	public int size(){
 		return exs.size();
 	}
@@ -56,7 +45,8 @@ public class ExceptionGroup extends RuntimeException implements Iterable<Excepti
 	}
 	
 	public boolean merge(ExceptionGroup other){
-		return exs.addAll(other.exs);
+		if(equals(other)) return false;
+		else return exs.addAll(other.exs);
 	}
 	
 	public void clear(){

@@ -9,6 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import static applications.Gender.M;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class SocialNetworkCircleTest {
 	SocialNetworkCircle s = new SocialNetworkCircle();
@@ -80,8 +81,14 @@ public class SocialNetworkCircleTest {
 		}
 	}
 	
-//	@Test
-//	public void temp(){
-//		GeneralLogger.warning(new LogicErrorException("emmmm"));
-//	}
+	@Test
+	public void loadFromFile_exception(){
+		SocialNetworkCircle s = new SocialNetworkCircle();
+		try{
+			s.loadFromFile("input/SocialNetworkCircle_error.txt");
+		} catch (ExceptionGroup exceptions) {
+			assertFalse(exceptions.isEmpty());
+			System.out.println(exceptions.size());
+		}
+	}
 }

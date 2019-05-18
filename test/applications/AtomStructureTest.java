@@ -1,6 +1,8 @@
 package applications;
 
 import exceptions.ExceptionGroup;
+import factory.CircularOrbitFactory;
+import factory.DefaultCircularOrbitFactory;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -46,6 +48,24 @@ public class AtomStructureTest {
 			f.loadFromFile("input/NotExist.jpg");
 		} catch (ExceptionGroup exceptions) {
 			assertFalse(exceptions.isEmpty());
+		}
+	}
+	
+	@Test
+	public void loadFromFile_exception(){
+		var f = new AtomStructure();
+		try{
+			f.loadFromFile("input/AtomicStructure_overload.txt");
+		} catch (ExceptionGroup exceptions) {
+			assertFalse(exceptions.isEmpty());
+		}
+		
+		var err = new AtomStructure();
+		try{
+			err.loadFromFile("input/AtomicStructure_error.txt");
+		} catch (ExceptionGroup exceptions) {
+			assertFalse(exceptions.isEmpty());
+			System.out.println(exceptions.size());
 		}
 	}
 }

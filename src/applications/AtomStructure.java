@@ -1,10 +1,11 @@
 package applications;
 
 import APIs.CircularOrbitAPIs;
-import exceptions.ExceptionGroup;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
+import exceptions.ExceptionGroup;
+import exceptions.GeneralLogger;
 import exceptions.LogicErrorException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,13 +13,18 @@ import track.Track;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static APIs.CircularOrbitHelper.generatePanel;
+import static exceptions.GeneralLogger.info;
+import static factory.PhysicalObjectFactory.produce;
 
 public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron> {
 	private Caretaker caretaker = new Caretaker();
@@ -36,62 +42,81 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 		};
 		ExceptionGroup exs = new ExceptionGroup();
 		File file = new File(path);
-		String[] txt = new String[3];
+		Set<String> txt = new TreeSet<>();
 		
 		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-			for (int i = 0; i < 3; i++) {
-				txt[i] = reader.readLine().trim();
-				if(txt[i] == null) {
-					exs.join(new LogicErrorException("Profile of AtomStructure needs at least 3 lines. returned. "));
-					throw exs;
-				}
-				if(txt[i].isEmpty()) i--;
+			String buf = reader.readLine();
+			while(buf != null){
+				buf = buf.trim();
+				if(!buf.isEmpty()) txt.add(buf);
+				buf = reader.readLine();
 			}
-			if(reader.readLine() != null) {
-				exs.join(new LogicErrorException("Profile of AtomStructure needs only 3 lines. returned. "));
-				throw exs;
-			}
-		} catch (Exception e) {
+		} catch (IOException e) {
 			exs.join(e);
 			throw exs;
 		}
 		
-		Arrays.sort(txt);
-		Matcher m = patterns[0].matcher(txt[0]);
-		if (!m.find() || m.groupCount() != 1) {
-			exs.join(new IllegalArgumentException("warning: regex: ElementName != 1. continued. "));
+		boolean[] flag = new boolean[]{false, false, false};
+		for (int i = 0; i < 3; i++) {
+			final int tmp = i;
+			txt.forEach(s->{
+				Matcher m = patterns[tmp].matcher(s);
+				if(!m.find() || m.groupCount() != 1) return;
+				var match = m.group(1);
+				if(flag[tmp]) {
+					exs.join(new LogicErrorException("repetitive label in " + s));
+					return;
+				}
+				switch (tmp){
+					case 0: changeCentre(new Kernel(match)); break;
+					case 1: {
+						String[] tae = match.split("[/;]");
+						if(tae.length % 2 == 1) exs.join(new LogicErrorException("lack of an arg. the last arg ("
+								+ tae[tae.length - 1] + ") is ignored. "));
+						assert objects.isEmpty();
+						for (int j = 0; j < tae.length; j += 2) {
+							int n;
+							try{
+								n = Integer.valueOf(tae[j+1]);
+								if(n < 0) throw new IllegalArgumentException();
+								for(int k = 0; k < n; k++)
+									while(!addObject((Electron) produce(Electron.class, new String[]{tae[j]})));
+							} catch (IllegalArgumentException e){
+								exs.join(new IllegalArgumentException("cannot parse electron number: " +
+										tae[j] + '/' + tae[j+1] + ". continued. "));
+							}
+						}
+						break;
+					}
+					case 2:{
+						int n;
+						try{
+							n = Integer.valueOf(match);
+							if(tracks.size() != n) {
+								exs.join(new IllegalArgumentException("track number != tracks.size (" +
+										n + "!=" + tracks.size() + "). continued. "));
+								return;
+							}
+						} catch (IllegalArgumentException e) {
+							exs.join(e);
+							return;
+						}
+						
+						for(int j = 1; j <= Integer.valueOf(match); j++) try{
+							addTrack(new double[]{j});
+						} catch (IllegalArgumentException e) {
+							exs.join(e);
+						}
+						break;
+					}
+				}
+				flag[tmp] = true;
+			});
 		}
 		
-		changeCentre(new Kernel(m.group(1)));
-		
-		m = patterns[2].matcher(txt[2]);
-		if (!m.find() || m.groupCount() != 1) {
-			exs.join(new IllegalArgumentException("regex: NumberOfTracks != 1. continued. "));
-		}
-		int n = Integer.valueOf(m.group(1));
-		
-		m = patterns[1].matcher(txt[1]);
-		if (!m.find() || m.groupCount() != 1) {
-			exs.join(new IllegalArgumentException("regex: NumberOfElectron != 1. continued. "));
-		}
-		
-		int[] num = new int[n];
-		String[] tmp = m.group(1).split("[/;]");
-		if(tmp.length != 2 * n) {
-			exs.join(new IllegalArgumentException("track number != sizeof(ObjectGroup). continued. "));
-		}
-		
-		for (int i = 0; i < n; i++) {
-			try{
-				num[i] = Integer.valueOf(tmp[2 * i + 1]);
-			} catch (NumberFormatException e) {
-				exs.join(new IllegalArgumentException("Number of electron is not numeric. continued. ", e));
-			}
-		}
-		
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < num[i]; j++) addObject(new Electron(i + 1));
-		}
+		if(!flag[0]) exs.join(new LogicErrorException("ElementName is not set. returned. "));
+		if(!flag[1]) exs.join(new LogicErrorException("NumberOfElectron is not set. returned. "));
+		if(!flag[2]) exs.join(new LogicErrorException("NumberOfTracks is not set. returned. "));
 		
 		if(!exs.isEmpty()) throw exs;
 		else return true;
@@ -112,21 +137,20 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 		if(!findTrack(from) || !findTrack(to)) return false;
 		//TODO boolean up = to[1] > from[0];
 		boolean up = to[0] > from[0];
-		Track tfrom = new Track(from);
-		//if(n > sfrom.size()) return false;
+		Track tFrom = new Track(from);
 		
 		caretaker.setMementos(from, to, saveMemento(from, to));
 		
 		for (int i = 0; i < number; i++) {
 			Electron e = CircularOrbitAPIs.find_if(this,
-					t->t.getR().equals(tfrom) && t.isGround() == up);
+					t->t.getR().equals(tFrom) && t.isGround() == up);
 			if(e == null || !moveObject(e, to)){
 				recover(from, to);
 				return false;
 			}
 			e.switchState(!up);
 		}
-
+		info("transit", new String[]{Arrays.toString(from), Arrays.toString(to), String.valueOf(number)});
 		return true;
 	}
 	

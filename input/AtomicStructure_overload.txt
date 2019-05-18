@@ -1,0 +1,9 @@
+ElementName ::= 
+NumberOfTracks ::= 5
+NumberOfTracks ::= -5
+NumberOfTracks ::= 58377
+
+dabsjdbwbd
+NumberOfTracks ::=
+NumberOfElectron ::= 
+NumberOfElectron ::= 1/2;2/8;3/18;4/8;6/1

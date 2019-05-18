@@ -4,14 +4,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.logging.*;
 
 public class GeneralLogger {
@@ -21,7 +18,7 @@ public class GeneralLogger {
 	static {
 		warning = Logger.getLogger("CircularOrbit.GeneralExceptionLogger");
 		info = Logger.getLogger("CircularOrbit.GeneralInfoLogger");
-		info.setLevel(Level.INFO);
+		info.setLevel(Level.OFF);
 		try {
 			File lp = new File("log/");
 			if(!lp.exists() && !lp.mkdir()) throw new IOException("cannot mkdir: log/");
@@ -47,12 +44,16 @@ public class GeneralLogger {
 	}
 	
 	public static void warning(ExceptionGroup exs){
-		exs.forEach(GeneralLogger::warning);
+	
 	}
 	
 	public static void warning(Exception e){
-		var c = e.getStackTrace()[0];
-		warning.warning(e.getClass().getSimpleName() + ": " + c +  ", " + e.getMessage());
+		Consumer<Exception> warn = ex->{
+			var c = ex.getStackTrace()[0];
+			warning.warning(ex.getClass().getSimpleName() + ": " + c +  ", " + ex.getMessage());
+		};
+		if(e instanceof ExceptionGroup) ((ExceptionGroup)e).forEach(warn);
+		else warn.accept(e);
 	}
 	
 	public static void info(String op, String[] args){
@@ -101,6 +102,11 @@ public class GeneralLogger {
 		}
 		
 		return wnp.getLogs();
+	}
+	
+	public static void close(){
+		warning.getHandlers()[0].close();
+		info.getHandlers()[0].close();
 	}
 }
 

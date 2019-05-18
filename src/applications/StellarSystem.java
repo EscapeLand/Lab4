@@ -62,7 +62,7 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 					if (buffer.isEmpty()) continue;
 					Matcher m = Pattern.compile("([a-zA-Z]+)\\s?::=\\s?<(.*)>").matcher(buffer);
 					if (!m.find() || m.groupCount() != 2)
-						throw new IllegalArgumentException("regex: group count != 2, continued. ");
+						throw new IllegalArgumentException("regex: (" + buffer + "), didn't match, continued. ");
 					switch (m.group(1)) {
 						case "Stellar": {
 							String[] list = m.group(2).split(",");
@@ -84,11 +84,11 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 							PhysicalObject p = PhysicalObjectFactory.produce(Planet.class, list);
 							assert p instanceof Planet;
 							if (!addObject(new PlanetarySystem((Planet) p)))
-								throw new RuntimeException("failed to add " + list[1] + ". continued. ");
+								throw new LogicErrorException(list[0] + " already exist. continued. ");
 							break;
 						}
 						default:
-							throw new IllegalArgumentException("regex: unexpected key: " + m.group(1) + "continued. ");
+							throw new IllegalArgumentException("regex: unexpected label: " + m.group(1) + " continued. ");
 					}
 				} catch (IllegalArgumentException | LogicErrorException e) {
 					exs.join(e);
@@ -99,6 +99,7 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 			throw exs;
 		}
 		
+		if(center() == null) exs.join(new LogicErrorException("no Central Object. returned. "));
 		if(!exs.isEmpty()) throw exs;
 		else return true;
 	}

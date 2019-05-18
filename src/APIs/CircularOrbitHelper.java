@@ -3,6 +3,7 @@ package APIs;
 import applications.StellarSystem;
 import circularOrbit.CircularOrbit;
 import exceptions.ExceptionGroup;
+import exceptions.GeneralLogger;
 import factory.CircularOrbitFactory;
 import factory.DefaultCircularOrbitFactory;
 import circularOrbit.PhysicalObject;
@@ -267,76 +268,6 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		return graph.insertEdge(parent, null, label, a, b, style);
 	}
 	
-	@SuppressWarnings("unchecked")
-	public static void main(String[] args){
-		CircularOrbitFactory factory = new DefaultCircularOrbitFactory();
-		CircularOrbit s;
-		Properties prop = new Properties();
-		String last = null;
-		
-		while(true){
-			try{
-				InputStream in = new BufferedInputStream(new FileInputStream("history.properties"));
-				prop.load(in);
-				last = prop.getProperty("lastLoad");
-				in.close();
-			} catch (IOException e) {
-				System.out.println("INFO: property not load. continued. ");
-				info("property not load. continued. ");
-			}
-			finally {
-				if(last == null) last = "input/";
-				last = prompt(null,
-						"Load From", "input the path of the config file. ", last);
-			}
-			
-			if(last == null) {
-				info("User exit. ");
-				return;
-			}
-			
-			try {
-				s = factory.CreateAndLoad(last);
-			} catch (ExceptionGroup exs){
-				alert(null, "Errors in profile", exs.getMessage());
-				warning(exs);
-				continue;
-			} catch (RuntimeException e) {
-				alert(null, "Error", e.getMessage());
-				warning(e);
-				continue;
-			}
-			
-			if(s == null) {
-				alert(null, "Error", "failed to create circular orbit. ");
-				info("Failed to Create CircularOrbit when scanning " + last);
-				continue;
-			}
-			
-			try {
-				FileOutputStream oFile = new FileOutputStream("history.properties");
-				prop.setProperty("lastLoad", last);
-				prop.store(oFile, "History");
-				oFile.close();
-			} catch (IOException e) {
-				//alert(null, "Error", e.getMessage());
-				warning(e);
-				continue;
-			}
-			
-			visualize(s);
-			return;
-		}
-		
-	}
-	
-	public static JPanel generatePanel(String title){
-		JPanel n = new JPanel();
-		n.setBorder(BorderFactory.createTitledBorder(title));
-		n.setLayout(new FlowLayout(FlowLayout.CENTER, 8, 8));
-		return n;
-	}
-	
 	@NotNull
 	public static JDialog logPanel(JFrame owner){
 		final String info = "log/info.log";
@@ -424,5 +355,75 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 			}
 		}
 		return new logP();
+	}
+	
+	public static JPanel generatePanel(String title){
+		JPanel n = new JPanel();
+		n.setBorder(BorderFactory.createTitledBorder(title));
+		n.setLayout(new FlowLayout(FlowLayout.CENTER, 8, 8));
+		return n;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static void main(String[] args){
+		CircularOrbitFactory factory = new DefaultCircularOrbitFactory();
+		CircularOrbit s;
+		Properties prop = new Properties();
+		String last = null;
+		
+		while(true){
+			try{
+				InputStream in = new BufferedInputStream(new FileInputStream("history.properties"));
+				prop.load(in);
+				last = prop.getProperty("lastLoad");
+				in.close();
+			} catch (IOException e) {
+				System.out.println("INFO: property not load. continued. ");
+				info("property not load. continued. ");
+			}
+			finally {
+				if(last == null) last = "input/";
+				last = prompt(null,
+						"Load From", "input the path of the config file. ", last);
+			}
+			
+			if(last == null) {
+				info("User exit. ");
+				return;
+			}
+			
+			try {
+				s = factory.CreateAndLoad(last);
+			} catch (ExceptionGroup exs){
+				alert(null, "Errors in profile", exs.getMessage());
+				warning(exs);
+				continue;
+			} catch (RuntimeException e) {
+				alert(null, "Error", e.getMessage());
+				warning(e);
+				continue;
+			}
+			
+			if(s == null) {
+				alert(null, "Error", "failed to create circular orbit. ");
+				info("Failed to Create CircularOrbit when scanning " + last);
+				continue;
+			}
+			
+			try {
+				FileOutputStream oFile = new FileOutputStream("history.properties");
+				prop.setProperty("lastLoad", last);
+				prop.store(oFile, "History");
+				oFile.close();
+			} catch (IOException e) {
+				//alert(null, "Error", e.getMessage());
+				warning(e);
+				continue;
+			}
+			
+			visualize(s);
+			break;
+		}
+		GeneralLogger.close();
 	}
 }
