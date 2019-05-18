@@ -5,7 +5,6 @@ import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
 import exceptions.ExceptionGroup;
-import exceptions.GeneralLogger;
 import exceptions.LogicErrorException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,7 +1,7 @@
 package factory;
 
-import exceptions.ExceptionGroup;
 import circularOrbit.CircularOrbit;
+import exceptions.ExceptionGroup;
 import org.jetbrains.annotations.Nullable;
 
 public interface CircularOrbitFactory {

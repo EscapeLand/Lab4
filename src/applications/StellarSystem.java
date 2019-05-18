@@ -109,7 +109,7 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 		JFrame frame = super.process(refresh);
 		this.test(frame, refresh);
 		
-		frame.setBounds(1000,232,364,512);
+		frame.setBounds(1000,232,388,512);
 		frame.setVisible(true);
 		return frame;
 	}
@@ -118,7 +118,8 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 	protected JPanel test(JFrame frame, Consumer<CircularOrbit> end) {
 		var par =  super.test(frame, end);
 		JPanel spec = new JPanel();
-		spec.setBounds(8, par.getY() + par.getHeight() + 8, 336, 224);
+		par.setSize(new Dimension(352, par.getHeight()));
+		spec.setBounds(8, par.getY() + par.getHeight() + 8, 352, 224);
 		spec.setLayout(new FlowLayout(FlowLayout.CENTER, 336, 8));
 		spec.setBorder(BorderFactory.createLineBorder(Color.decode("#e91e63"), 1, true));
 		frame.add(spec);
@@ -275,6 +276,11 @@ final class FixedStar extends PhysicalObject{
 		super(name, new double[]{r}, 0);
 		this.r = r;
 		this.m = m;
+	}
+	
+	@Override
+	public String toString() {
+		return getName();
 	}
 }
 

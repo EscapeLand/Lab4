@@ -1,10 +1,10 @@
 package factory;
 
-import exceptions.ExceptionGroup;
 import applications.AtomStructure;
 import applications.SocialNetworkCircle;
 import applications.StellarSystem;
 import circularOrbit.CircularOrbit;
+import exceptions.ExceptionGroup;
 import org.jetbrains.annotations.Nullable;
 
 public class DefaultCircularOrbitFactory implements CircularOrbitFactory {

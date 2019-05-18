@@ -2,13 +2,13 @@ package APIs;
 
 import applications.StellarSystem;
 import circularOrbit.CircularOrbit;
+import circularOrbit.PhysicalObject;
+import com.mxgraph.swing.mxGraphComponent;
+import com.mxgraph.view.mxGraph;
 import exceptions.ExceptionGroup;
 import exceptions.GeneralLogger;
 import factory.CircularOrbitFactory;
 import factory.DefaultCircularOrbitFactory;
-import circularOrbit.PhysicalObject;
-import com.mxgraph.swing.mxGraphComponent;
-import com.mxgraph.view.mxGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import track.Track;
@@ -18,10 +18,8 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.*;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static APIs.CircularOrbitAPIs.transform;
@@ -58,7 +56,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 			frame.setVisible(true);
 			return;
 		}
-		frame = new CircularOrbitHelper<>(c, 800);
+		frame = new CircularOrbitHelper<>(c, 784);
 		if(c instanceof StellarSystem) {
 			((StellarSystem) c).register(() -> frame.run((StellarSystem) c));
 			((StellarSystem) c).start();
@@ -274,9 +272,11 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		final String warning = "log/warning.log";
 		
 		class logP extends JDialog{
+			
+			@SuppressWarnings("unchecked")
 			private logP(){
 				super(owner, "Log");
-				setBounds(160, 40, 600, 600);
+				setBounds(280, 112, 600, 560);
 				setLayout(new FlowLayout(FlowLayout.LEFT, 8, 8));
 				setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 				setModal(true);
@@ -328,7 +328,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 				JScrollPane scpList = new JScrollPane(lstQuery);
 				scpList.setPreferredSize(new Dimension(564, 320));
 				
-				btnQuery.addActionListener(e->{
+				ActionListener act = e->{
 					int q;
 					switch (cmbFile.getSelectedIndex()){
 						case 0: q = cmbInfo.getSelectedIndex(); break;
@@ -340,7 +340,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 					
 					ref.list.forEach(l->{
 						var obj = l.get(q);
-						if((obj.toString().matches(".*" + txtQuery.getText() + ".*"))) {
+						if((obj.toString().matches("(?i).*" + txtQuery.getText() + ".*"))) {
 							List<String> tmp = new ArrayList<>(l.size());
 							transform(l, tmp, Object::toString);
 							res.add(String.join(" ", tmp));
@@ -348,7 +348,11 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 					});
 					
 					lstQuery.setListData(res.toArray(new String[0]));
-				});
+				};
+				btnQuery.addActionListener(act);
+				txtQuery.registerKeyboardAction(act,
+						KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false),
+						JComponent.WHEN_FOCUSED);
 				add(file);
 				add(query);
 				add(scpList);

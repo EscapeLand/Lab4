@@ -1,8 +1,6 @@
 package applications;
 
 import exceptions.ExceptionGroup;
-import factory.CircularOrbitFactory;
-import factory.DefaultCircularOrbitFactory;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;

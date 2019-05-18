@@ -4,7 +4,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,17 +19,18 @@ public class GeneralLogger {
 	static {
 		warning = Logger.getLogger("CircularOrbit.GeneralExceptionLogger");
 		info = Logger.getLogger("CircularOrbit.GeneralInfoLogger");
-		info.setLevel(Level.OFF);
+		info.getParent().getHandlers()[0].setLevel(Level.OFF);
 		try {
 			File lp = new File("log/");
 			if(!lp.exists() && !lp.mkdir()) throw new IOException("cannot mkdir: log/");
-			FileHandler fhI = new FileHandler("log/info.log");
-			FileHandler fhW = new FileHandler("log/warning.log");
+			FileHandler fhI = new FileHandler("log/info.log", true);
+			FileHandler fhW = new FileHandler("log/warning.log", true);
 			
 			Formatter fm = new java.util.logging.Formatter(){
 				@Override
 				public String format(LogRecord record) {
-					return record.getInstant() + "\t" + record.getLevel() + "\n" + record.getMessage() + "\n";
+					return record.getInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+							+ "\t" + record.getLevel() + "\n" + record.getMessage() + "\n";
 				}
 			};
 			
@@ -43,26 +45,16 @@ public class GeneralLogger {
 		}
 	}
 	
-	public static void warning(ExceptionGroup exs){
-	
-	}
-	
 	public static void warning(Exception e){
-		Consumer<Exception> warn = ex->{
-			var c = ex.getStackTrace()[0];
-			warning.warning(ex.getClass().getSimpleName() + ": " + c +  ", " + ex.getMessage());
-		};
+		Consumer<Exception> warn = ex-> warning.warning(ex.getClass().getSimpleName() + ": " + ex.getStackTrace()[0] +  ", " + ex.getMessage());
 		if(e instanceof ExceptionGroup) ((ExceptionGroup)e).forEach(warn);
 		else warn.accept(e);
 	}
 	
 	public static void info(String op, String[] args){
-		StringBuilder s = new StringBuilder();
-		s.append(op).append(" ");
-		for (String arg : args) s.append(arg).append(", ");
-		var l = s.length();
-		s.delete(l - 2, l);
-		info.info(s.toString());
+		String s = op + " " +
+				String.join(", ", args);
+		info.info(s);
 	}
 	
 	public static void info(String msg){
@@ -70,8 +62,7 @@ public class GeneralLogger {
 	}
 	
 	public static void severe(Exception e){
-		var c = e.getStackTrace()[0];
-		warning.severe(e.getClass().getSimpleName() + ": " + c + "." + c.getMethodName() + ", " + e.getMessage());
+		warning.severe(e.getClass().getSimpleName() + ": " + e.getStackTrace()[0] + ", " + e.getMessage());
 	}
 	
 	public static List<List> loadInfo(String path) throws IOException{
@@ -81,8 +72,8 @@ public class GeneralLogger {
 		
 		try (BufferedReader read = new BufferedReader(new FileReader(ifFile))) {
 			for(String buf = read.readLine(); buf != null; buf = read.readLine()){
-				buf += " " + read.readLine();
-				ifp.addLogs(buf.trim().split("\\s+"));
+				buf += "\t" + read.readLine();
+				ifp.addLogs(buf.trim().split("\\t+"));
 			}
 		}
 		
@@ -96,8 +87,8 @@ public class GeneralLogger {
 		
 		try (BufferedReader read = new BufferedReader(new FileReader(wnFile))) {
 			for(String buf = read.readLine(); buf != null; buf = read.readLine()){
-				buf += " " + read.readLine();
-				wnp.addLogs(buf.trim().split("\\s+"));
+				buf += "\t" + read.readLine();
+				wnp.addLogs(buf.trim().split("\\t+"));
 			}
 		}
 		
@@ -116,7 +107,7 @@ class InfoParser {
 	@SuppressWarnings("unchecked")
 	void addLogs(String[] log){
 		List list = new ArrayList();
-		list.add(Instant.parse(log[0]));
+		list.add(LocalDateTime.parse(log[0]));
 		list.add(Level.parse(log[1]));
 		list.addAll(Arrays.asList(log).subList(2, log.length));
 		logs.add(list);
@@ -133,7 +124,7 @@ class WarningParser {
 	@SuppressWarnings("unchecked")
 	void addLogs(String[] log){
 		List list = new ArrayList();
-		list.add(Instant.parse(log[0]));
+		list.add(LocalDateTime.parse(log[0]));
 		list.add(Level.parse(log[1]));
 		list.add(log[2].substring(0, log[2].length() - 1));
 		list.add(String.join(" ", Arrays.asList(log).subList(3, log.length)));

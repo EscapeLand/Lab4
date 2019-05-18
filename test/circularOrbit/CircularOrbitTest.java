@@ -1,8 +1,8 @@
 package circularOrbit;
 
-import factory.PhysicalObjectFactory;
 import factory.CircularOrbitFactory;
 import factory.DefaultCircularOrbitFactory;
+import factory.PhysicalObjectFactory;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;

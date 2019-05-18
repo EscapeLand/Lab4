@@ -1,8 +1,6 @@
 package applications;
 
 import exceptions.ExceptionGroup;
-import exceptions.GeneralLogger;
-import exceptions.LogicErrorException;
 import org.junit.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -12,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 public class SocialNetworkCircleTest {
-	SocialNetworkCircle s = new SocialNetworkCircle();
+	private SocialNetworkCircle s = new SocialNetworkCircle();
 	public SocialNetworkCircleTest() {
 		s.loadFromFile("input/SocialNetworkCircle.txt");
 	}
@@ -59,10 +57,11 @@ public class SocialNetworkCircleTest {
 		
 		c.removeTrack(new double[]{1});
 		User Frank = (User) c.query("FrankLee");
+		assert Frank != null;
 		assertEquals(-1.0, Frank.getR().getRect()[0], 0);
 	}
 	
-	@Test
+	@Test @SuppressWarnings("JavaReflectionInvocation")
 	public void testExtendVal(){
 		var cls = s.getClass();
 		var Tom = s.query("TomWong");

@@ -172,14 +172,14 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		var ops = new String[]{"Add", "Remove"};
 		
 		JComboBox<String> cmbOps = new JComboBox<>(ops);
-		JTextField trackNum = new JTextField("  1");
+		JTextField trackNum = new JTextField(8);
 		JButton trackExec = new JButton("Execute");
 		
 		trackExec.addActionListener(e -> {
 			double d; try{
 				d = Double.valueOf(trackNum.getText().trim());
 			} catch (NumberFormatException ex) {
-				trackNum.setText("  1");
+				trackNum.setText("1");
 				return;
 			}
 			switch (cmbOps.getSelectedIndex()){
@@ -242,10 +242,11 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		common.add(objOP);
 		
 		
-		JButton btnent = new JButton("Calculate Entropy");
+		JButton btnent = new JButton("Entropy");
 		JButton btnLog = new JButton("Log Panel");
 		JLabel lblrst = new JLabel("");
-		btnent.addActionListener(e-> lblrst.setText(String.valueOf(getObjectDistributionEntropy(this))));
+		btnent.addActionListener(e-> lblrst.setText(
+				String.valueOf(getObjectDistributionEntropy(this))));
 		btnLog.addActionListener(e->{
 			var logp = CircularOrbitHelper.logPanel(frame);
 			CircularOrbitHelper.frame.setVisible(false);

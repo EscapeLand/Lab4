@@ -1,11 +1,11 @@
 package APIs;
 
-import factory.PhysicalObjectFactory;
 import applications.StellarSystem;
 import circularOrbit.CircularOrbit;
+import circularOrbit.PhysicalObject;
 import factory.CircularOrbitFactory;
 import factory.DefaultCircularOrbitFactory;
-import circularOrbit.PhysicalObject;
+import factory.PhysicalObjectFactory;
 import org.junit.Test;
 
 import java.util.Objects;

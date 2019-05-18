@@ -5,7 +5,6 @@ import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
 import exceptions.ExceptionGroup;
 import exceptions.LogicErrorException;
-import factory.PhysicalObjectFactory;
 import org.jetbrains.annotations.NotNull;
 import track.Track;
 
@@ -16,7 +15,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
