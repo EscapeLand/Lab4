@@ -58,6 +58,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override
 	public boolean removeTrack(double[] r){
+		assert r.length > 0;
 		Track<E> tmp = new Track<>(r);
 		var b = tracks.remove(tmp);
 		var it = objects.iterator();
@@ -94,6 +95,8 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override
 	public boolean moveObject(E obj, double[] to) {
+		assert obj != null;
+		assert to != null;
 		if(!objects.contains(obj)) return false;
 		var tmp = new Track<>(to);
 		obj.setR(tmp);
@@ -104,19 +107,22 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	}
 	
 	@Override
-	public boolean removeObject(@NotNull E obj){
+	public boolean removeObject(E obj){
+		assert obj != null;
 		info("removeObject", new String[]{obj.toString()});
 		relationship.remove(obj);
 		return objects.remove(obj);
 	}
 	
 	@Override
-	public void setRelation(@NotNull PhysicalObject a, @NotNull PhysicalObject b, float val){
-		info("setRelation", new String[]{a.toString(), b.toString(), String.valueOf(val)});
+	public void setRelation(PhysicalObject a, PhysicalObject b, float val){
+		assert a != null;
+		assert b != null;
 		assert !a.equals(b);
 		relationship.add(a);
 		relationship.add(b);
 		relationship.set(a, b, val);
+		info("setRelation", new String[]{a.toString(), b.toString(), String.valueOf(val)});
 	}
 	
 	@NotNull @Override
@@ -125,7 +131,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	}
 	
 	@Override @Nullable
-	public PhysicalObject query(String objName){
+	public PhysicalObject query(@NotNull String objName){
 		info("query", new String[]{objName});
 		final String name = objName.trim();
 		if(centre.getName().equals(name)) return centre;
@@ -271,7 +277,8 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	}
 	
 	@Override
-	public boolean addObject(@NotNull E newObject){
+	public boolean addObject(E newObject){
+		assert newObject != null;
 		info("addObject", new String[]{newObject.toString()});
 		tracks.add(newObject.getR());
 		return objects.add(newObject);
@@ -283,6 +290,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	 */
 	@NotNull
 	protected Set<E> getObjectsOnTrack(Track r) {
+		assert r != null;
 		final Set<E> ret = new TreeSet<>(E.getDefaultComparator());
 		forEach(e->{
 			if(e.getR().equals(r)) ret.add(ECLASS.cast(e));
@@ -292,11 +300,13 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	
 	@Override @NotNull
 	public Set<E> getObjectsOnTrack(double[] r) {
+		assert r.length > 0;
 		return getObjectsOnTrack(new Track(r));
 	}
 	
 	@Override @NotNull
 	public Set<E> getObjectsOnTrack(Double[] r) {
+		assert r.length > 0;
 		return getObjectsOnTrack(new Track(r));
 	}
 	

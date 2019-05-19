@@ -28,23 +28,23 @@ public class CircularOrbitAPIsTest {
 	public void getObjectDistributionEntropy() throws ClassNotFoundException {
 		CircularOrbit atom = cf.Create("AtomicStructure");
 		var eArgs = new String[]{"1"};
-		var ecls = Class.forName("applications.Electron");
+		var eCls = Class.forName("applications.Electron");
 		assert atom != null;
-		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eArgs)));
+		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eCls, eArgs)));
 		var _1 = CircularOrbitAPIs.getObjectDistributionEntropy(atom);
-		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eArgs)));
+		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eCls, eArgs)));
 		var _2 = CircularOrbitAPIs.getObjectDistributionEntropy(atom);
 		eArgs[0] = "2";
-		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eArgs)));
+		atom.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eCls, eArgs)));
 		var _3 = CircularOrbitAPIs.getObjectDistributionEntropy(atom);
-		assertTrue(_1 < _2);
+		assertEquals(_1, _2, 0.0);
 		assertTrue(_2 < _3);
 		
 		CircularOrbit atom2 = cf.Create("AtomicStructure");
 		assert atom2 != null;
-		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eArgs)));
-		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eArgs)));
-		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(ecls, eArgs)));
+		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eCls, eArgs)));
+		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eCls, eArgs)));
+		atom2.addObject(Objects.requireNonNull(PhysicalObjectFactory.produce(eCls, eArgs)));
 		var _4 = CircularOrbitAPIs.getObjectDistributionEntropy(atom2);
 		assertTrue(_4 < _3);
 	}

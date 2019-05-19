@@ -322,7 +322,7 @@ class Planet extends PhysicalObject {
 	
 	@Override
 	public Planet clone() {
-		var tmp = new Planet(getName(), getForm(), getColor(), r, getR().getRect(), v, pos_init);
+		var tmp = new Planet(getName(), getForm(), getColor(), r, getR().getRect(), v, getDir(), pos_init);
 		tmp.setPos(getPos());
 		return tmp;
 	}
@@ -337,6 +337,10 @@ class Planet extends PhysicalObject {
 	
 	String getColor() { return color; }
 	
+	Dir getDir(){
+		return v < 0 ? Dir.CW : Dir.CCW;
+	}
+	
 	/**
 	 * @param name name of the planet
 	 * @param form form of the planet
@@ -349,16 +353,11 @@ class Planet extends PhysicalObject {
 	 */
 	Planet(String name, Form form, String color, double r,
 	       double[] R, double v, Dir dir, double pos) {
-		this(name, form, color, r, R, (dir == Dir.CW ? -1 : 1) * Math.abs(v / R[0]), pos);
-	}
-	
-	Planet(String name, Form form, String color, double r,
-	       double[] R, double v, double pos){
 		super(name, R, pos);
 		this.color = color;
 		this.form = form;
 		this.r = r;
-		this.v = v;
+		this.v = (dir == Dir.CW ? -1 : 1) * Math.abs(v / R[0]);
 	}
 	
 	@Override
@@ -375,7 +374,7 @@ final class PlanetarySystem extends Planet{
 	
 	PlanetarySystem(@NotNull Planet center) {
 		super(center.getName(), center.getForm(), center.getColor(), center.r, center.getR().getRect(),
-				center.v, center.getPos());
+				center.v, center.getDir(), center.getPos());
 	}
 	
 	public boolean addSatellite(@NotNull Planet satellite){

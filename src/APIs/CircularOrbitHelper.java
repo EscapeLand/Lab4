@@ -340,11 +340,19 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 					
 					ref.list.forEach(l->{
 						var obj = l.get(q);
-						if((obj.toString().matches("(?i).*" + txtQuery.getText() + ".*"))) {
-							List<String> tmp = new ArrayList<>(l.size());
-							transform(l, tmp, Object::toString);
-							res.add(String.join(" ", tmp));
+						String reg = txtQuery.getText();
+						if(reg.charAt(0) != '^') reg = ".*" + reg;
+						if(reg.charAt(reg.length() - 1) != '$') reg += ".*";
+						try{
+							if((obj.toString().matches("(?i)" + reg))) {
+								List<String> tmp = new ArrayList<>(l.size());
+								transform(l, tmp, Object::toString);
+								res.add(String.join(" ", tmp));
+							}
+						} catch (IllegalArgumentException ex) {
+							res.add(ex.getLocalizedMessage());
 						}
+						
 					});
 					
 					lstQuery.setListData(res.toArray(new String[0]));

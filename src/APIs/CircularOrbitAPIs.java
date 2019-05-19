@@ -14,15 +14,15 @@ import java.util.function.Predicate;
 public class CircularOrbitAPIs {
 	public static<L extends PhysicalObject, E extends PhysicalObject>
 	double getObjectDistributionEntropy(CircularOrbit<L, E> c){
-		Map<Double, Float> p = new HashMap<>();
+		Map<Track, Float> p = new HashMap<>();
 		int sum = 0;
 		for (E i : c) {
-			Float tmp = p.get(i.getR());
-			if(tmp == null) tmp = 0.0f;
-			p.put(i.getR().getRect()[0], tmp + 1.0f);
+			Float tmp = p.getOrDefault(i.getR(), 0.0f);
+			p.put(i.getR(), tmp + 1.0f);
 			sum++;
 		}
-		for(Map.Entry<Double, Float> i: p.entrySet()) p.put(i.getKey(), i.getValue() / sum);
+		final int tmp = sum;
+		p.forEach((t, v)-> p.put(t, v / tmp));
 		
 		float H = 0;
 		for(Float i: p.values()) H -= i * Math.log(i);

@@ -15,6 +15,7 @@ import java.util.function.Consumer;
  * @param <L> center object type.
  * @param <E> object on track.
  */
+@SuppressWarnings("UnnecessaryInterfaceModifier")
 public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObject> extends Iterable<E>{
 	/**
 	 * check RI.
@@ -75,7 +76,7 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	/**
 	 * @param path infers R text file with regulated input.
 	 * @return true if the load is complete with no error; else false.
-	 * @throws IOException when cannot open the file inferred by path.
+	 * @throws ExceptionGroup when cannot open the file inferred by path.
 	 */
 	public boolean loadFromFile(String path) throws ExceptionGroup;
 	
@@ -85,7 +86,7 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	 * @return the object.
 	 */
 	@Nullable
-	public PhysicalObject query(String name);
+	public PhysicalObject query(@NotNull String name);
 	
 	/**
 	 * @return all the tracks in circular orbit.
