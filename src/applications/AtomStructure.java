@@ -26,7 +26,7 @@ import static exceptions.GeneralLogger.info;
 import static factory.PhysicalObjectFactory.produce;
 
 public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron> {
-	private Caretaker caretaker = new Caretaker();
+	private final Caretaker caretaker = new Caretaker();
 	
 	public AtomStructure() {
 		super(Kernel.class, Electron.class);
@@ -79,6 +79,7 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 								n = Integer.valueOf(tae[j+1]);
 								if(n < 0) throw new IllegalArgumentException();
 								for(int k = 0; k < n; k++)
+									//noinspection StatementWithEmptyBody
 									while(!addObject((Electron) produce(Electron.class, new String[]{tae[j]})));
 							} catch (IllegalArgumentException e){
 								exs.join(new IllegalArgumentException("cannot parse electron number: " +
@@ -268,7 +269,7 @@ final class Caretaker{
 			return result;
 		}
 	}
-	private Map<pair, Memento<Electron>> mementos = new HashMap<>();
+	private final Map<pair, Memento<Electron>> mementos = new HashMap<>();
 	
 	@Nullable
 	Memento<Electron> getMementos(double[] from, double[] to) {

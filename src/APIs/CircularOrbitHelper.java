@@ -58,7 +58,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		}
 		frame = new CircularOrbitHelper<>(c, 784);
 		if(c instanceof StellarSystem) {
-			((StellarSystem) c).register(() -> frame.run((StellarSystem) c));
+			//((StellarSystem) c).register(() -> frame.run((StellarSystem) c));
 			((StellarSystem) c).start();
 		}
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -206,6 +206,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private void run(@NotNull StellarSystem s) {
 		info("run", new String[]{s.toString()});
 		Map <PhysicalObject, double[]>current = new HashMap<>();

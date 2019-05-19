@@ -1,10 +1,12 @@
 package applications;
 
 import APIs.CircularOrbitAPIs;
+import APIs.CircularOrbitHelper;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
 import exceptions.ExceptionGroup;
+import exceptions.GeneralLogger;
 import exceptions.LogicErrorException;
 import factory.PhysicalObjectFactory;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +18,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -28,21 +32,41 @@ import static APIs.CircularOrbitHelper.generatePanel;
 public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet> {
 	private Thread loop;
 	private double time = 0;
-	private double timeSpan = 160000;
+	private double timeSpan = 1e16;
 	private Runnable refresh;
+	private static Method mtd;
 	
-	public StellarSystem() {
+	static{
+		try {
+			mtd = Class.forName("APIs.CircularOrbitHelper").getDeclaredMethod(
+					"run", StellarSystem.class);
+			mtd.setAccessible(true);
+		} catch (NoSuchMethodException | ClassNotFoundException e) {
+			GeneralLogger.severe(e);
+			System.exit(1);
+		}
+	}
+	
+	public StellarSystem(){
 		super(FixedStar.class, Planet.class);
+		refresh = ()-> {
+			try {
+				mtd.invoke(CircularOrbitHelper.frame, this);
+			} catch (IllegalAccessException | InvocationTargetException e) {
+				GeneralLogger.severe(e);
+				System.exit(1);
+			}
+		};
 	}
 	
-	/**
-	 * register a refresh function.
-	 * it will be called whenever the stellar system is changed.
-	 * @param refresh the function.
-	 */
-	public void register(Runnable refresh) {
-		this.refresh = refresh;
-	}
+//	/**
+//	 * register a refresh function.
+//	 * it will be called whenever the stellar system is changed.
+//	 * @param refresh the function.
+//	 */
+//	public void register(Runnable refresh) {
+//		this.refresh = refresh;
+//	}
 	
 	/**
 	 * start a new thread to refresh the User Interface.
@@ -126,17 +150,9 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 		
 		JPanel pnlTimeAt = generatePanel("State at Time");
 		JLabel lblTimeAt = new JLabel("Time at: ");
-		JTextField txtTimeAt = new JTextField("1800000");
+		JTextField txtTimeAt = new JTextField(8);
+		txtTimeAt.setText(String.valueOf(time));
 		JButton btnTimeApply = new JButton("Apply");
-		btnTimeApply.addActionListener(e-> {
-			try{
-				setTime(Double.valueOf(txtTimeAt.getText().trim()));
-			} catch (NumberFormatException ex) {
-				txtTimeAt.setText("1800000");
-				return;
-			}
-			end.accept(this);
-		});
 		pnlTimeAt.add(lblTimeAt); pnlTimeAt.add(txtTimeAt); pnlTimeAt.add(btnTimeApply);
 		spec.add(pnlTimeAt);
 		
@@ -162,7 +178,8 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 		JButton btnReset = new JButton("Reset"),
 				btnPause = new JButton("Pause"),
 				btnTimeSpanApply = new JButton("Apply");
-		JTextField txtTimeSpan = new JTextField("1600000");
+		JTextField txtTimeSpan = new JTextField(4);
+		txtTimeSpan.setText(String.valueOf(timeSpan));
 		btnReset.addActionListener(e->{this.reset(); end.accept(this); btnPause.setText("Resume");});
 		btnPause.addActionListener(e->{
 			switch (btnPause.getText()) {
@@ -180,8 +197,18 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 			try{
 				this.setTimeSpan(Double.valueOf(txtTimeSpan.getText().trim()));
 			} catch (NumberFormatException ex) {
-				txtTimeSpan.setText("1600000");
+				txtTimeSpan.setText(String.valueOf(timeSpan));
 			}
+		});
+		btnTimeApply.addActionListener(e-> {
+			try{
+				setTime(Double.valueOf(txtTimeAt.getText().trim()));
+				btnPause.setText("Resume");
+			} catch (NumberFormatException ex) {
+				txtTimeAt.setText(String.valueOf(time));
+				return;
+			}
+			end.accept(this);
 		});
 		pnlCtrl.add(btnReset); pnlCtrl.add(btnPause); pnlCtrl.add(txtTimeSpan); pnlCtrl.add(btnTimeSpanApply);
 		spec.add(pnlCtrl);
